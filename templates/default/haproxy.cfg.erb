@@ -1,0 +1,45 @@
+global
+	log 127.0.0.1	local0
+	log 127.0.0.1	local1 notice
+	#log loghost	local0 info
+	maxconn 4096
+	#chroot /usr/share/haproxy
+	user haproxy
+	group haproxy
+	daemon
+	#debug
+	#quiet
+
+defaults
+	log	global
+	mode	http
+	option	httplog
+	option	dontlognull
+	option forwardfor
+	retries	3
+	option redispatch
+	maxconn	2000
+	contimeout	5000
+	clitimeout	50000
+	srvtimeout	50000 
+	
+listen stats 0.0.0.0:9000       #Listen on all IP's on port 9000
+    mode http
+    balance
+    timeout client 5000
+    timeout connect 4000
+    timeout server 30000
+
+    #This is the virtual URL to access the stats page
+    stats uri /haproxy_stats        
+
+    #Authentication realm. This can be set to anything. Escape space characters with a backslash.
+    stats realm HAProxy\ Statistics 
+
+    #The user/pass you want to use. Change this password!
+    stats auth admin:Test101   
+
+    #This allows you to take down and bring up back end servers.
+    #This will produce an error on older versions of HAProxy.
+    stats admin if TRUE
+        

@@ -1,0 +1,22 @@
+[program:haproxy_zookeeper]
+command = /usr/bin/python /var/haproxy_zookeeper.py
+autostart=true
+#autorestart=true
+autorestart=unexpected
+
+stopsignal=KILL
+stopasgroup = true
+killasgroup = true
+startretries = 100000000
+
+stdout_logfile=/tmp/haproxy_zookeeper.log
+stdout_logfile_maxbytes=1MB
+stdout_logfile_backups=1
+
+stderr_logfile = /tmp/haproxy_zookeeper.err
+stderr_logfile_maxbytes=1MB
+stderr_logfile_backups=1
+
+[group:haproxy_zookeeper_server]
+programs=haproxy_zookeeper
+

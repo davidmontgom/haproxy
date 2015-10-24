@@ -1,0 +1,33 @@
+
+        listen redis  127.0.0.1:9200
+        mode tcp
+        option tcpka
+        option tcplog
+        balance roundrobin
+        server elasticsearch-1 45.55.30.70:9200 check
+        
+        listen redis  127.0.0.1:26379
+        mode tcp
+        option tcpka
+        option tcplog
+        balance roundrobin
+        server sentinal-1 45.55.28.226:26379 check
+        adadf
+
+
+
+
+        listen redis  127.0.0.1:9200
+        mode tcp
+        option tcpka
+        option tcplog
+        balance roundrobin
+        server elasticsearch-1 45.55.30.70:9200 check
+        
+        listen redis  127.0.0.1:26379
+        mode tcp
+        option tcpka
+        option tcplog
+        balance roundrobin
+        server sentinal-1 45.55.28.226:26379 check
+        
