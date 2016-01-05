@@ -115,7 +115,7 @@ while True:
             print path,children
             
             ip_encode = get_ip_encode(children)
-            server_type = path.split('-')[1]
+            server_type = path.split('-')[4]
             if os.path.isfile('/etc/haproxy/conf.d/%s-%s.cfg' % (server_type,ip_encode))==False:
                 create_cgf(path,list(children))
                 
