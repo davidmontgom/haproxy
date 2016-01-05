@@ -31,7 +31,7 @@ f.close()
 environment = parms['environment']
 location = parms['location']
 datacenter = parms['datacenter']
-
+slug = parms['slug']
 zk_host_list = open('/var/zookeeper_hosts.json').readlines()[0]
 
 zk_host_list = zk_host_list.split(',')
@@ -91,7 +91,8 @@ def get_service_hash():
          service_hash = json.load(data_file)
     zookeeper_path_list = []
     for server_type in service_hash.keys():
-        temp = "/%s-%s-%s-%s" % (datacenter,server_type,location,environment)
+        #aws-east-development-trade-monitor
+        temp = "/%s-%s-%s-%s" % (datacenter,location,environment,slug,server_type)
         zookeeper_path_list.append(temp)
     return service_hash, zookeeper_path_list
 
