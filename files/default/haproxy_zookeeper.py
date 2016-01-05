@@ -14,6 +14,29 @@ logging.basicConfig()
 1) get ip address from file
 2) register server
 3) If change in servers then rerun chef
+
+How to fix sharding 
+
+"haproxy":{"elasticsearch":"127.0.0.1:9200",
+               "sentinal":"127.0.0.1:26379",
+               "kafka":"127.0.0.1:9092",
+               "zookeeper":"127.0.0.1:2181",
+               "druidbroker":"127.0.0.1:8082"   
+    },
+
+1)     
+"haproxy":[{"server_type": "elasticsearch",
+            "address":"127.0.0.1",
+            "port":"9200"
+            "shard":"True"}
+}\
+
+2) Or for every server type, if not found then check if beciase of shard
+   then issue solved.  This is prob the easiest
+  
+
+
+
 """
 
 # with open('ha_services.json') as data_file:    
