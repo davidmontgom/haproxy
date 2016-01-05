@@ -1,10 +1,3 @@
-datacenter = node.name.split('-')[0]
-server_type = node.name.split('-')[1]
-location = node.name.split('-')[2]
-  
-#data_bag("my_data_bag")
-#ha = data_bag_item("my_data_bag", "haproxy")
-#ha_services = ha[node.chef_environment]
 ha_services = node["haproxy"]
 ha_services_json=ha_services.to_json
 

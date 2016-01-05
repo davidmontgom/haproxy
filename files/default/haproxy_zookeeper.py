@@ -9,22 +9,6 @@ import base64
 import logging #https://kazoo.readthedocs.org/en/latest/basic_usage.html
 logging.basicConfig()
 
-
-
-
-SETTINGS_FILE='/etc/ec2/meta_data.yaml'
-from yaml import load, dump
-from yaml import Loader, Dumper
-f = open(SETTINGS_FILE)
-parms = load(f, Loader=Loader)
-f.close()
-
-
-
-environment = parms['environment']
-location = parms['location']
-datacenter = parms['datacenter']
-
 """
 0) load zookeeper from file written by chef
 1) get ip address from file
