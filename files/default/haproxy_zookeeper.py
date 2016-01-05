@@ -48,7 +48,7 @@ zk = get_zk_conn()
 
 def create_cgf(path,addresses):
     
-    server_type = path.split('-')[1]
+    server_type = path.split('-')[4]
     if service_hash[server_type].find(':80')>=0:
         mode = 'http'
     else:
