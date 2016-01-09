@@ -44,7 +44,7 @@ How to fix sharding
 #zk_host_list = '107.170.219.233'
 
 
-SETTINGS_FILE='/etc/ec2/meta_data.yaml'
+SETTINGS_FILE='/root/.bootops.yaml'
 from yaml import load, dump
 from yaml import Loader, Dumper
 f = open(SETTINGS_FILE)
