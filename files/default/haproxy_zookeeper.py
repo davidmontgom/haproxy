@@ -59,7 +59,7 @@ if running_in_pydev==False:
     datacenter = parms['datacenter']
     slug = parms['slug']
     server_type = parms['server_type']
-    settings_file = parms['settings_file']
+    settings_path = parms['settings_path']
     if os.path.isfile('/var/cluster_slug/.txt'):
         cluster_slug = open("/var/cluster_slug/.txt").readlines()[0].strip()
     else:
@@ -76,7 +76,7 @@ else:
     slug = "forex"
     zk_host_str = "1-zookeeper-do-development-ny-forex.forexhui.com:2181"
     cluster_slug = "nocluster"
-    settings_file = "/home/ubuntu/workspace/forex-settings"
+    settings_path = "/home/ubuntu/workspace/forex-settings"
     server_type = "monitor"
 
 def get_zk_conn():
@@ -127,8 +127,8 @@ def my_func(event):
     addresses = zk.get_children(event.path)
     create_cgf(path,addresses)
 
-def get_service_hash(settings_file,server_type):
-    fn = "%s/server_data_bag/%s.json" % (settings_file,server_type)
+def get_service_hash(settings_path,server_type):
+    fn = "%s/server_data_bag/%s.json" % (settings_path,server_type)
     with open(fn) as data_file:    
          service_hash = json.load(data_file)
     
@@ -152,10 +152,8 @@ def get_ip_encode(children):
     return ip_encode
  
 while True:
-    service_hash, zookeeper_path_list = get_service_hash(settings_file,server_type)
-    
-    pprint(service_hash)
-    exit()
+    service_hash, zookeeper_path_list = get_service_hash(settings_path,server_type)
+
     for path in zookeeper_path_list:
         try:
             exists = zk.exists(path)
