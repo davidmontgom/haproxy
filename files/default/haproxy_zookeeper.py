@@ -6,6 +6,7 @@ import os
 import sys
 import psutil
 import base64 
+from pprint import pprint
 import logging #https://kazoo.readthedocs.org/en/latest/basic_usage.html
 logging.basicConfig()
 
@@ -44,24 +45,39 @@ How to fix sharding
 #zk_host_list = '107.170.219.233'
 
 
-SETTINGS_FILE='/root/.bootops.yaml'
-from yaml import load, dump
-from yaml import Loader, Dumper
-f = open(SETTINGS_FILE)
-parms = load(f, Loader=Loader)
-f.close()
-
-environment = parms['environment']
-location = parms['location']
-datacenter = parms['datacenter']
-slug = parms['slug']
-
-zk_host_list = open('/var/zookeeper_hosts.json').readlines()[0]
-
-zk_host_list = zk_host_list.split(',')
-for i in xrange(len(zk_host_list)):
-    zk_host_list[i]=zk_host_list[i]+':2181' 
-zk_host_str = ','.join(zk_host_list)
+running_in_pydev = 'PYDEV_CONSOLE_ENCODING' in os.environ
+if running_in_pydev==False:
+    SETTINGS_FILE='/root/.bootops.yaml'
+    from yaml import load, dump
+    from yaml import Loader, Dumper
+    f = open(SETTINGS_FILE)
+    parms = load(f, Loader=Loader)
+    f.close()
+    
+    environment = parms['environment']
+    location = parms['location']
+    datacenter = parms['datacenter']
+    slug = parms['slug']
+    server_type = parms['server_type']
+    settings_file = parms['settings_file']
+    if os.path.isfile('/var/cluster_slug/.txt'):
+        cluster_slug = open("/var/cluster_slug/.txt").readlines()[0].strip()
+    else:
+        cluster_slug = "nocluster"
+    zk_host_list = open('/var/zookeeper_hosts.json').readlines()[0]
+    zk_host_list = zk_host_list.split(',')
+    for i in xrange(len(zk_host_list)):
+        zk_host_list[i]=zk_host_list[i]+':2181' 
+    zk_host_str = ','.join(zk_host_list)
+else:
+    environment = "development"
+    location = "ny"
+    datacenter = "do"
+    slug = "forex"
+    zk_host_str = "1-zookeeper-do-development-ny-forex.forexhui.com:2181"
+    cluster_slug = "nocluster"
+    settings_file = "/home/ubuntu/workspace/forex-settings"
+    server_type = "monitor"
 
 def get_zk_conn():
     zk = KazooClient(hosts=zk_host_str, read_only=True)
@@ -72,14 +88,14 @@ zk = get_zk_conn()
 def create_cgf(path,addresses):
     
     server_type = path.split('-')[4]
-    if service_hash[server_type].find(':80')>=0:
+    if service_hash[server_type]["port"]==[80]:
         mode = 'http'
     else:
         mode = 'tcp'
     print server_type
     temp = []
     for index,ip in enumerate(list(addresses)):
-        temp.append('server %s-%s %s:%s check' % (server_type,index+1,ip,service_hash[server_type].split(':')[1]))
+        temp.append('server %s-%s %s:%s check' % (server_type,index+1,ip,service_hash[server_type]["port"]))
     temp = '\n'.join(temp)
     temp_ha = """
     listen %s  %s
@@ -101,6 +117,7 @@ def create_cgf(path,addresses):
     os.system('rm /etc/haproxy/haproxy.cfg')
     os.system("cat /etc/haproxy/haproxy.cfg.orig /etc/haproxy/conf.d/*.cfg >> /etc/haproxy/haproxy.cfg")
     os.system('/usr/sbin/service haproxy reload')
+    print "reloading haproxy"
     sys.stdout.flush()
     sys.stderr.flush()
     
@@ -110,14 +127,23 @@ def my_func(event):
     addresses = zk.get_children(event.path)
     create_cgf(path,addresses)
 
-def get_service_hash():
-    with open('/var/ha_services.json') as data_file:    
+def get_service_hash(settings_file,server_type):
+    fn = "%s/server_data_bag/%s.json" % (settings_file,server_type)
+    with open(fn) as data_file:    
          service_hash = json.load(data_file)
+    
+    if service_hash.has_key('haproxy'):
+        service_hash = service_hash['haproxy']
+    else:
+        service_hash = {}
+
     zookeeper_path_list = []
     for server_type in service_hash.keys():
-        #aws-east-development-trade-monitor
-        temp = "/%s-%s-%s-%s-%s" % (datacenter,location,environment,slug,server_type)
-        zookeeper_path_list.append(temp)
+        base = "%s-%s-%s-%s-%s" % (datacenter,environment,location,server_type,slug)
+        if cluster_slug!="nocluster":
+            base = "%s-%s" % (base,cluster_slugcluster_slug)
+        zookeeper_path_list.append(base)
+
     return service_hash, zookeeper_path_list
 
 def get_ip_encode(children):
@@ -126,19 +152,22 @@ def get_ip_encode(children):
     return ip_encode
  
 while True:
-    service_hash, zookeeper_path_list = get_service_hash()
+    service_hash, zookeeper_path_list = get_service_hash(settings_file,server_type)
+    
+    pprint(service_hash)
+    exit()
     for path in zookeeper_path_list:
         try:
             exists = zk.exists(path)
         except KazooException:
             exists = None
             zk = get_zk_conn()
+            
         if exists:
             children = zk.get_children(path, watch=my_func)
-            print path,children
-            
             ip_encode = get_ip_encode(children)
             server_type = path.split('-')[4]
+
             if os.path.isfile('/etc/haproxy/conf.d/%s-%s.cfg' % (server_type,ip_encode))==False:
                 create_cgf(path,list(children))
                 

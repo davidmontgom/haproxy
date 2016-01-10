@@ -1,3 +1,4 @@
+=begin
 ha_services = node["haproxy"]
 ha_services_json=ha_services.to_json
 
@@ -7,7 +8,7 @@ file "/var/ha_services.json" do
   mode '0666'
   content "#{ha_services_json}"
 end
-
+=end
 
 
 bash "haproxy_template" do
