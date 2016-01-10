@@ -87,8 +87,8 @@ zk = get_zk_conn()
 
 def create_cgf(path,addresses):
     
-    server_type = path.split('-')[4]
-    if service_hash[server_type]["port"]==[80]:
+    server_type = path.split('-')[3]
+    if service_hash[server_type]["port"]==80:
         mode = 'http'
     else:
         mode = 'tcp'
@@ -164,7 +164,7 @@ while True:
         if exists:
             children = zk.get_children(path, watch=my_func)
             ip_encode = get_ip_encode(children)
-            server_type = path.split('-')[4]
+            server_type = path.split('-')[3]
 
             if os.path.isfile('/etc/haproxy/conf.d/%s-%s.cfg' % (server_type,ip_encode))==False:
                 create_cgf(path,list(children))
