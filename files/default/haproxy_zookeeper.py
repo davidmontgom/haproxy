@@ -153,7 +153,7 @@ def get_ip_encode(children):
  
 while True:
     service_hash, zookeeper_path_list = get_service_hash(settings_path,server_type)
-
+    print 'mymeta',service_hash, zookeeper_path_list
     for path in zookeeper_path_list:
         try:
             exists = zk.exists(path)
