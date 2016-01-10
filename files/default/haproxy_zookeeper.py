@@ -98,13 +98,13 @@ def create_cgf(path,addresses):
         temp.append('server %s-%s %s:%s check' % (server_type,index+1,ip,service_hash[server_type]["port"]))
     temp = '\n'.join(temp)
     temp_ha = """
-    listen %s  %s
+    listen %s  %s:%s
     mode %s
     option tcpka
     option tcplog
     balance roundrobin
     %s
-    """ % (server_type,service_hash[server_type],mode,temp)
+    """ % (server_type,service_hash[server_type]['host'],service_hash[server_type]['port'],mode,temp)
     
     ip_encode = get_ip_encode(addresses)
     os.system('rm /etc/haproxy/conf.d/%s*.cfg' % (server_type))
