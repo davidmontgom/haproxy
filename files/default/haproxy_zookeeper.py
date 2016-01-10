@@ -160,7 +160,7 @@ while True:
         except KazooException:
             exists = None
             zk = get_zk_conn()
-            
+        print path,exists
         if exists:
             children = zk.get_children(path, watch=my_func)
             ip_encode = get_ip_encode(children)
@@ -169,7 +169,7 @@ while True:
             if os.path.isfile('/etc/haproxy/conf.d/%s-%s.cfg' % (server_type,ip_encode))==False:
                 create_cgf(path,list(children))
                 
-            
     sys.stdout.flush()
     sys.stderr.flush()
-    time.sleep(.5)
+    print '-'*20
+    time.sleep(1)
