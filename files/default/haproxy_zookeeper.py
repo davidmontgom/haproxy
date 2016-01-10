@@ -164,9 +164,9 @@ while True:
         if exists:
             children = zk.get_children(path, watch=my_func)
             ip_encode = get_ip_encode(children)
-            server_type = path.split('-')[3]
+            this_server_type = path.split('-')[3]
 
-            if os.path.isfile('/etc/haproxy/conf.d/%s-%s.cfg' % (server_type,ip_encode))==False:
+            if os.path.isfile('/etc/haproxy/conf.d/%s-%s.cfg' % (this_server_type,ip_encode))==False:
                 create_cgf(path,list(children))
                 
     sys.stdout.flush()
