@@ -74,7 +74,7 @@ else:
     location = "ny"
     datacenter = "do"
     slug = "forex"
-    zk_host_str = "1-zookeeper-do-development-ny-forex.forexhui.com:2181"
+    zk_host_str = "1-zookeeper-forex-do-development-ny.forexhui.com:2181"
     cluster_slug = "nocluster"
     settings_path = "/home/ubuntu/workspace/forex-settings"
     server_type = "monitor"
@@ -139,9 +139,9 @@ def get_service_hash(settings_path,server_type):
 
     zookeeper_path_list = []
     for server_type in service_hash.keys():
-        base = "%s-%s-%s-%s-%s" % (datacenter,environment,location,server_type,slug)
+        base = "%s-%s-%s-%s-%s" % (server_type,slug,datacenter,environment,location)
         if cluster_slug!="nocluster":
-            base = "%s-%s" % (base,cluster_slugcluster_slug)
+            base = "%s-%s" % (base,cluster_slug)
         zookeeper_path_list.append(base)
 
     return service_hash, zookeeper_path_list
@@ -154,6 +154,7 @@ def get_ip_encode(children):
 while True:
     service_hash, zookeeper_path_list = get_service_hash(settings_path,server_type)
     print 'mymeta',service_hash, zookeeper_path_list
+    
     for path in zookeeper_path_list:
         try:
             exists = zk.exists(path)
