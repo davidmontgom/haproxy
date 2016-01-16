@@ -74,11 +74,16 @@ bash "haproxy_template" do
   action :run
 end
 
+execute "restart_haproxy_health" do
+  command "sudo supervisorctl restart haproxy_zookeeper_server::"
+  action :nothing
+end
 
 cookbook_file "/var/haproxy_zookeeper.py" do
   source "haproxy_zookeeper.py"
   mode 00744
-  notifies :restart, resources(:service => "supervisord")
+  notifies :run, "execute[restart_haproxy_health]"
+  #notifies :restart, resources(:service => "supervisord")
 end
 
 
