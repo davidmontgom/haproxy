@@ -91,17 +91,19 @@ def get_zk_conn():
     return zk
 zk = get_zk_conn()
 
-def create_cgf(path,addresses):
+def create_cgf(path,addresses,server_type,meta):
     
-    server_type = path.split('-')[0]
-    if service_hash[server_type]["port"]==80:
-        mode = 'http'
+
+    mode = meta['mode']
+        
+    if meta.has_key("proxy_port"):
+        proxy_port = meta['proxy_port']
     else:
-        mode = 'tcp'
-    print server_type
+        proxy_port = meta['remote_port']
+
     temp = []
     for index,ip in enumerate(list(addresses)):
-        temp.append('server %s-%s %s:%s check' % (server_type,index+1,ip,service_hash[server_type]["port"]))
+        temp.append('server %s-%s %s:%s check' % (server_type,index+1,ip,proxy_port))
     temp = '\n'.join(temp)
     temp_ha = """
     listen %s  %s:%s
@@ -110,7 +112,7 @@ def create_cgf(path,addresses):
     option tcplog
     balance roundrobin
     %s
-    """ % (server_type,service_hash[server_type]['host'],service_hash[server_type]['port'],mode,temp)
+    """ % (server_type,meta['host'],meta['remote_port'],mode,temp)
     
     ip_encode = get_ip_encode(addresses)
     os.system('rm /etc/haproxy/conf.d/%s*.cfg' % (server_type))
@@ -143,20 +145,22 @@ def get_service_hash(settings_path,server_type):
     else:
         service_hash = {}
 
-    
-    
-    
+
     zookeeper_path_list = []
-    for server_type,meta in service_hash.iteritems():
+    for server_type_temp,meta in service_hash.iteritems():
         cluster_slug = "nocluster"
-        if meta.has_key('cluster_slug'):
-            cluster_slug = meta['cluster_slug']
+        if server_type_temp.find('-')>=0:
+            server_type,cluster_slug = server_type_temp.split('-')
+            service_hash[server_type_temp]['cluster_slug']=cluster_slug
+        else:
+            server_type = server_type_temp
+ 
         base = "%s-%s-%s-%s-%s" % (server_type,slug,datacenter,environment,location)
         if cluster_slug!="nocluster":
             base = "%s-%s" % (base,cluster_slug)
+        service_hash[server_type_temp]['path']=base
         zookeeper_path_list.append(base)
-        print base
-
+        
     return service_hash, zookeeper_path_list
 
 def get_ip_encode(children):
@@ -168,22 +172,26 @@ while True:
     service_hash, zookeeper_path_list = get_service_hash(settings_path,server_type)
     print 'mymeta',service_hash, zookeeper_path_list
     
-    
-    for path in zookeeper_path_list:
+    for server_type,meta in service_hash.iteritems():
+        path = meta['path']
+        print server_type
+        
+ 
         try:
             exists = zk.exists(path)
         except KazooException:
             exists = None
             zk = get_zk_conn()
-        print path,exists
+        #print path,exists
         if exists:
             children = zk.get_children(path, watch=my_func)
+            #print children
             ip_encode = get_ip_encode(children)
-            this_server_type = path.split('-')[0]
-
-            if os.path.isfile('/etc/haproxy/conf.d/%s-%s.cfg' % (this_server_type,ip_encode))==False:
-                create_cgf(path,list(children))
-                
+              
+            if os.path.isfile('/etc/haproxy/conf.d/%s-%s.cfg' % (server_type,ip_encode))==False:
+                create_cgf(path,list(children),server_type,meta)
+  
+ 
     sys.stdout.flush()
     sys.stderr.flush()
     print '-'*20
