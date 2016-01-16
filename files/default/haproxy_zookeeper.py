@@ -64,7 +64,7 @@ if running_in_pydev==False:
     location = parms['location']
     datacenter = parms['datacenter']
     slug = parms['slug']
-    server_type = parms['server_type']
+    this_server_type = parms['server_type']
     settings_path = parms['settings_path']
     if os.path.isfile('/var/cluster_slug/.txt'):
         cluster_slug = open("/var/cluster_slug/.txt").readlines()[0].strip()
@@ -83,7 +83,7 @@ else:
     zk_host_str = "1-zookeeper-forex-do-development-ny.forexhui.com:2181"
     cluster_slug = "nocluster"
     settings_path = "/home/ubuntu/workspace/forex-settings"
-    server_type = "monitor"
+    this_server_type = "monitor"
 
 def get_zk_conn():
     zk = KazooClient(hosts=zk_host_str, read_only=True)
@@ -169,14 +169,12 @@ def get_ip_encode(children):
     return ip_encode
  
 while True:
-    service_hash, zookeeper_path_list = get_service_hash(settings_path,server_type)
+    service_hash, zookeeper_path_list = get_service_hash(settings_path,this_server_type)
     print 'mymeta',service_hash, zookeeper_path_list
     
     for server_type,meta in service_hash.iteritems():
         path = meta['path']
-        print server_type
-        
- 
+
         try:
             exists = zk.exists(path)
         except KazooException:
@@ -187,10 +185,10 @@ while True:
             children = zk.get_children(path, watch=my_func)
             #print children
             ip_encode = get_ip_encode(children)
-              
+               
             if os.path.isfile('/etc/haproxy/conf.d/%s-%s.cfg' % (server_type,ip_encode))==False:
                 create_cgf(path,list(children),server_type,meta)
-  
+   
  
     sys.stdout.flush()
     sys.stderr.flush()
