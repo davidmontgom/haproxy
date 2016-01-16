@@ -78,6 +78,7 @@ end
 cookbook_file "/var/haproxy_zookeeper.py" do
   source "haproxy_zookeeper.py"
   mode 00744
+  notifies :restart, resources(:service => "supervisord")
 end
 
 

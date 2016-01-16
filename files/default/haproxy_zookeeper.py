@@ -45,6 +45,12 @@ How to fix sharding
 #zk_host_list = '107.170.219.233'
 
 
+"""
+haproxy name server_type-cluster_slug
+
+"""
+
+
 running_in_pydev = 'PYDEV_CONSOLE_ENCODING' in os.environ
 if running_in_pydev==False:
     SETTINGS_FILE='/root/.bootops.yaml'
