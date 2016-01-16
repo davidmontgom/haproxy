@@ -75,7 +75,7 @@ bash "haproxy_template" do
 end
 
 execute "restart_haproxy_health" do
-  command "sudo supervisorctl restart haproxy_zookeeper_server::"
+  command "sudo supervisorctl restart haproxy_zookeeper_server:"
   action :nothing
 end
 
