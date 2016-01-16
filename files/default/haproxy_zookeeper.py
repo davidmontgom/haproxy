@@ -137,12 +137,19 @@ def get_service_hash(settings_path,server_type):
     else:
         service_hash = {}
 
+    
+    
+    
     zookeeper_path_list = []
-    for server_type in service_hash.keys():
+    for server_type,meta in service_hash.iteritems():
+        cluster_slug = "nocluster"
+        if meta.has_key('cluster_slug'):
+            cluster_slug = meta['cluster_slug']
         base = "%s-%s-%s-%s-%s" % (server_type,slug,datacenter,environment,location)
         if cluster_slug!="nocluster":
             base = "%s-%s" % (base,cluster_slug)
         zookeeper_path_list.append(base)
+        print base
 
     return service_hash, zookeeper_path_list
 
@@ -154,6 +161,7 @@ def get_ip_encode(children):
 while True:
     service_hash, zookeeper_path_list = get_service_hash(settings_path,server_type)
     print 'mymeta',service_hash, zookeeper_path_list
+    
     
     for path in zookeeper_path_list:
         try:
