@@ -122,6 +122,10 @@ def create_cgf(path,addresses,server_type,meta):
     f.write(temp_ha)
     f.close()
     
+    f = open('/tmp/hareload.txt','a')
+    f.write('%s %s' % server_type,json.dumps(meta))
+    f.close()
+    
     os.system('rm /etc/haproxy/haproxy.cfg')
     os.system("cat /etc/haproxy/haproxy.cfg.orig /etc/haproxy/conf.d/*.cfg >> /etc/haproxy/haproxy.cfg")
     os.system('/usr/sbin/service haproxy reload')
