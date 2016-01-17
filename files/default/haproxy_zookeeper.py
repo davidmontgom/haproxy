@@ -123,7 +123,7 @@ def create_cgf(path,addresses,server_type,meta):
     f.close()
     
     f = open('/tmp/hareload.txt','a')
-    f.write('%s %s\n' % server_type,json.dumps(meta))
+    f.write('%s %s\n' % (server_type,json.dumps(meta)))
     f.close()
     
     os.system('rm /etc/haproxy/haproxy.cfg')
