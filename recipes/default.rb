@@ -14,7 +14,7 @@ end
 bash "haproxy_template" do
   user "root"
   code <<-EOH
-   add-apt-repository ppa:vbernat/haproxy-1.5
+   add-apt-repository ppa:vbernat/haproxy-1.6
    apt-get update
   EOH
   action :run
