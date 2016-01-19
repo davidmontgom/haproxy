@@ -102,6 +102,7 @@ def create_cgf(path,addresses,server_type,meta):
     else:
         proxy_port = meta['remote_port']
     remote_port = meta['remote_port']
+    host = meta['host']
 
     temp = []
     for index,ip in enumerate(list(addresses)):
@@ -118,10 +119,10 @@ def create_cgf(path,addresses,server_type,meta):
 #     """ % (server_type,meta['host'],meta['remote_port'],mode,temp)
     
 
-    replace_values = { 'server_type':server_type,'mode':mode,'server_list':temp,'proxy_port':proxy_port,'remote_port':remote_port}
+    replace_values = { 'server_type':server_type,'mode':mode,'server_list':temp,'proxy_port':proxy_port,'remote_port':remote_port,'host':host}
     t = string.Template("""
     frontend ${server_type}_front
-       bind 127.0.0.1:${proxy_port}
+       bind ${host}:${proxy_port}
        mode $mode
        option ${mode}log
        default_backend ${server_type}_backend
@@ -141,15 +142,15 @@ def create_cgf(path,addresses,server_type,meta):
         mode = meta['frontend']['mode']
         proxy_port = meta['frontend']['proxy_port']
         remote_port = meta['frontend']['remote_port']
-        
+        host = meta['frontend']['host']
         temp = []
         for index,ip in enumerate(list(addresses)):
             temp.append('server %s-%s-%s %s:%s check' % (fe_server_type,server_type,index+1,ip,remote_port))
-        
-        replace_values = { 'server_type':fe_server_type,'mode':mode,'server_list':temp,'proxy_port':proxy_port,'remote_port':remote_port}
+        temp = '\n'.join(temp)
+        replace_values = { 'server_type':fe_server_type,'mode':mode,'server_list':temp,'proxy_port':proxy_port,'remote_port':remote_port,'host':host}
         t = string.Template("""
         frontend ${server_type}_front
-           bind 127.0.0.1:${proxy_port}
+           bind ${host}:${proxy_port}
            mode $mode
            option ${mode}log
            default_backend ${server_type}_backend
@@ -168,9 +169,7 @@ def create_cgf(path,addresses,server_type,meta):
         %s
         
         """ % (temp_ha,temp_ha_frontend)
-    
-    
-    
+
     ip_encode = get_ip_encode(addresses)
     os.system('rm /etc/haproxy/conf.d/%s*.cfg' % (server_type))
     if os.path.isfile('/etc/haproxy/conf.d/%s-%s.cfg' % (server_type,ip_encode)):
