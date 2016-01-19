@@ -167,12 +167,7 @@ def create_cgf(path,addresses,server_type,meta):
         
         %s
         
-        """ (temp_ha,temp_ha_frontend)
-    
-    
-    
-    
-    
+        """ % (temp_ha,temp_ha_frontend)
     
     
     
