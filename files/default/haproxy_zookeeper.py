@@ -68,7 +68,7 @@ if running_in_pydev==False:
     this_server_type = parms['server_type']
     settings_path = parms['settings_path']
     if os.path.isfile('/var/cluster_slug/.txt'):
-        cluster_slug = open("/var/cluster_slug/.txt").readlines()[0].strip()
+        cluster_slug = open("/var/cluster_slug.txt").readlines()[0].strip()
     else:
         cluster_slug = "nocluster"
     zk_host_list = open('/var/zookeeper_hosts.json').readlines()[0]
@@ -82,9 +82,9 @@ else:
     datacenter = "do"
     slug = "forex"
     zk_host_str = "1-zookeeper-forex-do-development-ny.forexhui.com:2181"
-    cluster_slug = "nocluster"
+    cluster_slug = "pixel"
     settings_path = "/home/ubuntu/workspace/forex-settings"
-    this_server_type = "monitor"
+    this_server_type = "haproxy"
 
 def get_zk_conn():
     zk = KazooClient(hosts=zk_host_str, read_only=True)
@@ -93,6 +93,8 @@ def get_zk_conn():
 zk = get_zk_conn()
 
 def create_cgf(path,addresses,server_type,meta):
+    
+
     
 
     mode = meta['mode']
@@ -208,18 +210,34 @@ def get_service_hash(settings_path,server_type):
 
     zookeeper_path_list = []
     for server_type_temp,meta in service_hash.iteritems():
-        cluster_slug = "nocluster"
+
+        this_cluster_slug = "nocluster"
         if server_type_temp.find('-')>=0:
-            server_type,cluster_slug = server_type_temp.split('-')
-            service_hash[server_type_temp]['cluster_slug']=cluster_slug
+            server_type,this_cluster_slug = server_type_temp.split('-')
+            service_hash[server_type_temp]['cluster_slug']=this_cluster_slug
         else:
             server_type = server_type_temp
- 
-        base = "%s-%s-%s-%s-%s" % (server_type,slug,datacenter,environment,location)
-        if cluster_slug!="nocluster":
-            base = "%s-%s" % (base,cluster_slug)
-        service_hash[server_type_temp]['path']=base
-        zookeeper_path_list.append(base)
+            
+  
+        if meta.has_key('match_type'):
+            match_type = meta['match_type']
+        else:
+            match_type = False
+        if match_type:
+            if match_type==cluster_slug:
+                add = True
+            else:
+                add = False
+        else:
+            add = True
+
+        if add==True:
+            base = "%s-%s-%s-%s-%s" % (server_type,slug,datacenter,environment,location)
+            if this_cluster_slug!="nocluster":
+                base = "%s-%s" % (base,this_cluster_slug)
+            service_hash[server_type_temp]['path']=base
+            zookeeper_path_list.append(base)
+            
         
     return service_hash, zookeeper_path_list
 
