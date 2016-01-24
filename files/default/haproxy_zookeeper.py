@@ -1,5 +1,6 @@
 import zc.zk
 from kazoo.client import KazooClient
+import dns.resolver
 import time
 import json
 import os
