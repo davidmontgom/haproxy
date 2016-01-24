@@ -51,6 +51,22 @@ haproxy name server_type-cluster_slug
 
 """
 
+def get_zk_host_list():
+    zk_host_list_dns = open('/var/zookeeper_hosts.json').readlines()[0]
+    zk_host_list_dns = zk_host_list_dns.split(',')
+    zk_host_list = []
+    for aname in zk_host_list_dns:
+        try:
+            data =  dns.resolver.query(aname, 'A')
+            zk_host_list.append(data[0].to_text()+':2181')
+        except:
+            print 'ERROR, dns.resolver.NXDOMAIN',aname
+    return zk_host_list
+
+def get_zk_host_str(zk_host_list):
+    zk_host_str = ','.join(zk_host_list)
+    return zk_host_str
+
 
 running_in_pydev = 'PYDEV_CONSOLE_ENCODING' in os.environ
 if running_in_pydev==False:
@@ -71,11 +87,11 @@ if running_in_pydev==False:
         cluster_slug = open("/var/cluster_slug.txt").readlines()[0].strip()
     else:
         cluster_slug = "nocluster"
-    zk_host_list = open('/var/zookeeper_hosts.json').readlines()[0]
-    zk_host_list = zk_host_list.split(',')
-    for i in xrange(len(zk_host_list)):
-        zk_host_list[i]=zk_host_list[i]+':2181' 
-    zk_host_str = ','.join(zk_host_list)
+#     zk_host_list = open('/var/zookeeper_hosts.json').readlines()[0]
+#     zk_host_list = zk_host_list.split(',')
+#     for i in xrange(len(zk_host_list)):
+#         zk_host_list[i]=zk_host_list[i]+':2181' 
+#     zk_host_str = ','.join(zk_host_list)
 else:
     environment = "development"
     location = "ny"
@@ -87,10 +103,19 @@ else:
     this_server_type = "haproxy"
 
 def get_zk_conn():
-    zk = KazooClient(hosts=zk_host_str, read_only=True)
-    zk.start()
+    zk_host_list = get_zk_host_list()
+    if zk_host_list:
+        zk_host_str = get_zk_host_str(zk_host_list)
+        zk = KazooClient(hosts=zk_host_str, read_only=True)
+        zk.start()
+    else:
+        zk = None
+        print 'waiting for zk conn...'
+        time.sleep(1)
     return zk
 zk = get_zk_conn()
+
+
 
 def create_cgf(path,addresses,server_type,meta):
     
