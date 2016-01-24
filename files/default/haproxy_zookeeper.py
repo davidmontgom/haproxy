@@ -280,7 +280,6 @@ while True:
     print 'mymeta',service_hash, zookeeper_path_list
     
     zk_chksum = hashlib.md5(open('/var/zookeeper_hosts.json', 'rb').read()).hexdigest()
-    
     if zk_chksum!=zk_chksum:
         zk = get_zk_conn()
         
