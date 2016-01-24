@@ -1,6 +1,7 @@
 import zc.zk
 from kazoo.client import KazooClient
 import dns.resolver 
+import hashlib
 import time
 import json
 import os
@@ -51,6 +52,8 @@ How to fix sharding
 haproxy name server_type-cluster_slug
 
 """
+
+zk_chksum_init = hashlib.md5(open('/var/zookeeper_hosts.json', 'rb').read()).hexdigest()
 
 def get_zk_host_list():
     zk_host_list_dns = open('/var/zookeeper_hosts.json').readlines()[0]
@@ -275,6 +278,12 @@ def get_ip_encode(children):
 while True:
     service_hash, zookeeper_path_list = get_service_hash(settings_path,this_server_type)
     print 'mymeta',service_hash, zookeeper_path_list
+    
+    zk_chksum = hashlib.md5(open('/var/zookeeper_hosts.json', 'rb').read()).hexdigest()
+    
+    if zk_chksum!=zk_chksum:
+        zk = get_zk_conn()
+        
     
     for server_type,meta in service_hash.iteritems():
         path = meta['path']
