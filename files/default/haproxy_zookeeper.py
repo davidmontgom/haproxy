@@ -87,10 +87,11 @@ if running_in_pydev==False:
     slug = parms['slug']
     this_server_type = parms['server_type']
     settings_path = parms['settings_path']
-    if os.path.isfile('/var/cluster_slug/.txt'):
+    if os.path.isfile('/var/cluster_slug.txt'):
         cluster_slug = open("/var/cluster_slug.txt").readlines()[0].strip()
     else:
         cluster_slug = "nocluster"
+        
 #     zk_host_list = open('/var/zookeeper_hosts.json').readlines()[0]
 #     zk_host_list = zk_host_list.split(',')
 #     for i in xrange(len(zk_host_list)):
@@ -236,7 +237,7 @@ def get_service_hash(settings_path,server_type):
     else:
         service_hash = {}
 
-
+    cluster_slugs_to_delete = []
     zookeeper_path_list = []
     for server_type_temp,meta in service_hash.iteritems():
 
@@ -252,13 +253,15 @@ def get_service_hash(settings_path,server_type):
             match_type = meta['match_type']
         else:
             match_type = False
+            
         if match_type:
             if match_type==cluster_slug:
                 add = True
             else:
                 add = False
+                cluster_slugs_to_delete.append(server_type_temp)
         else:
-            add = True
+            add = False
 
         if add==True:
             base = "%s-%s-%s-%s-%s" % (server_type,slug,datacenter,environment,location)
@@ -267,6 +270,11 @@ def get_service_hash(settings_path,server_type):
             service_hash[server_type_temp]['path']=base
             zookeeper_path_list.append(base)
             
+    #Used for frontend HA.  Delete server_types that dont have
+    # a match type.  Front end proxies will have ONLY 1 match type
+    # assert error if len(service_hash)>1
+    for server_type in cluster_slugs_to_delete:
+        del service_hash[server_type]
         
     return service_hash, zookeeper_path_list
 
