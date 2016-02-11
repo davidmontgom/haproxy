@@ -249,12 +249,14 @@ def get_service_hash(settings_path,server_type):
             server_type = server_type_temp
             
   
+        add = True
+        
+        #match type is for matching a ha proxy cluster_slug with a server_type ONLY
         if meta.has_key('match_type'):
             match_type = meta['match_type']
         else:
             match_type = False
             
-        add = True
         if match_type:
             if match_type==cluster_slug:
                 add = True
