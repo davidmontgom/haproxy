@@ -254,14 +254,14 @@ def get_service_hash(settings_path,server_type):
         else:
             match_type = False
             
+        add = True
         if match_type:
             if match_type==cluster_slug:
                 add = True
             else:
                 add = False
                 cluster_slugs_to_delete.append(server_type_temp)
-        else:
-            add = True
+            
 
         if add==True:
             base = "%s-%s-%s-%s-%s" % (server_type,slug,datacenter,environment,location)
