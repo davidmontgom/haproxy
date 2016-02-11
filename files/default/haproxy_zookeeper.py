@@ -261,7 +261,7 @@ def get_service_hash(settings_path,server_type):
                 add = False
                 cluster_slugs_to_delete.append(server_type_temp)
         else:
-            add = False
+            add = True
 
         if add==True:
             base = "%s-%s-%s-%s-%s" % (server_type,slug,datacenter,environment,location)
@@ -293,6 +293,7 @@ while True:
         
     
     for server_type,meta in service_hash.iteritems():
+        
         path = meta['path']
 
         try:
