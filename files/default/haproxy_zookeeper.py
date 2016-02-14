@@ -135,37 +135,65 @@ def create_cgf(path,addresses,server_type,meta):
         proxy_port = meta['remote_port']
     remote_port = meta['remote_port']
     host = meta['host']
-
-    temp = []
-    for index,ip in enumerate(list(addresses)):
-        temp.append('server %s-%s %s:%s check' % (server_type,index+1,ip,remote_port))
+    
+    if meta.has_key("sticky"):
+        sticky = meta["sticky"]
+    else:
+        sticky = False
         
-    temp = '\n'.join(temp)
-#     temp_ha = """
-#     listen %s  %s:%s
-#     mode %s
-#     option tcpka
-#     option tcplog
-#     balance roundrobin
-#     %s
-#     """ % (server_type,meta['host'],meta['remote_port'],mode,temp)
+    #http://blog.haproxy.com/2012/03/29/load-balancing-affinity-persistence-sticky-sessions-what-you-need-to-know/
+    temp = []
+    if sticky==False:
+        for index,ip in enumerate(list(addresses)):
+            temp.append('server %s-%s %s:%s check' % (server_type,index+1,ip,remote_port))   
+        temp = '\n'.join(temp)
+    else:
+        for index,ip in enumerate(list(addresses)):
+            temp.append('server %s-%s %s:%s check cookie s%s' % (server_type,index+1,ip,remote_port,index+1))   
+        temp = '\n'.join(temp)
+        
+
     
 
-    replace_values = { 'server_type':server_type,'mode':mode,'server_list':temp,'proxy_port':proxy_port,'remote_port':remote_port,'host':host}
-    t = string.Template("""
-    frontend ${server_type}_front
-       bind ${host}:${proxy_port}
-       mode $mode
-       option ${mode}log
-       default_backend ${server_type}_backend
-    
-    backend ${server_type}_backend
-       mode $mode
-       option ${mode}log
-       balance roundrobin
-       $server_list
-    """)
-    temp_ha = t.substitute(replace_values)
+    if sticky==False:
+        replace_values = { 'server_type':server_type,'mode':mode,'server_list':temp,'proxy_port':proxy_port,'remote_port':remote_port,'host':host}
+        t = string.Template("""
+        frontend ${server_type}_front
+           bind ${host}:${proxy_port}
+           mode $mode
+           option ${mode}log
+           default_backend ${server_type}_backend
+        
+        backend ${server_type}_backend
+           mode $mode
+           option ${mode}log
+           balance roundrobin
+           $server_list
+        """)
+        temp_ha = t.substitute(replace_values)
+    else:
+        replace_values = { 'server_type':server_type,'mode':mode,'server_list':temp,'proxy_port':proxy_port,'remote_port':remote_port,'host':host}
+        t = string.Template("""
+        frontend ${server_type}_front
+           bind ${host}:${proxy_port}
+           mode $mode
+           option ${mode}log
+           default_backend ${server_type}_backend
+        
+        backend ${server_type}_backend
+           option httpclose
+           option forwardfor
+           http-request set-header X-Forwarded-Port %[dst_port]
+           http-request add-header X-Forwarded-Proto https if { ssl_fc }
+           option httpchk HEAD / HTTP/1.1\r\nHost:localhost
+           cookie SERVERID insert indirect nocache
+           mode $mode
+           option ${mode}log
+           balance roundrobin
+           $server_list
+        """)
+        temp_ha = t.substitute(replace_values)
+        
     
     
     if meta.has_key('frontend'):
