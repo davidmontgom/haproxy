@@ -6,11 +6,10 @@ location = node.name.split('-')[4]
 cluster_slug = File.read("/var/cluster_slug.txt")
 cluster_slug = cluster_slug.gsub(/\n/, "") 
 
-
 data_bag("server_data_bag")
 haproxy_server = data_bag_item("server_data_bag", "haproxy")
 
-public_ports = haproxy_server_server[datacenter][environment][location][cluster_slug]['public_ports']
+public_ports = haproxy_server[datacenter][environment][location][cluster_slug]['public_ports']
 
 
 public_ports.each do |port|
