@@ -121,7 +121,6 @@ def get_zk_conn():
 zk = get_zk_conn()
 
 
-
 def create_cgf(path,addresses,server_type,meta):
     
 
@@ -185,7 +184,7 @@ def create_cgf(path,addresses,server_type,meta):
            option forwardfor
            http-request set-header X-Forwarded-Port %[dst_port]
            http-request add-header X-Forwarded-Proto https if { ssl_fc }
-           option httpchk HEAD / HTTP/1.1\r\nHost:localhost
+           
            cookie SERVERID insert indirect nocache
            mode $mode
            option ${mode}log
