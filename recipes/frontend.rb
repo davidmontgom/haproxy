@@ -19,7 +19,7 @@ public_ports.each do |port|
       code <<-EOH
         
         /sbin/iptables -I INPUT -i eth0 -p tcp --dport #{port} -m state --state NEW,ESTABLISHED -j ACCEPT
-        /sbin/iptables -I INPUT -i eth0 -p tcp --sport #{port} -m state --state ESTABLISHED -j ACCEPT
+        /sbin/iptables -I OUTPUT -o eth0 -p tcp --sport #{port} -m state --state ESTABLISHED -j ACCEPT
         /etc/init.d/iptables-persistent save
         
         touch /var/chef/cache/iptables_#{port}.lock
