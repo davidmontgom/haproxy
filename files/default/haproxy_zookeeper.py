@@ -39,15 +39,18 @@ slug = parms['slug']['slug']
 this_server_type = parms['server_type']
 settings_path = parms['settings_path']
 
-
-haproxy_server = parms['haproxy']['haproxy']
-if parms['haproxy']['haproxy'].has_key(cluster_slug):
-    if parms['haproxy']['haproxy'][cluster_slug].has_key('emperor'):
-        emperor = parms['haproxy']['haproxy'][cluster_slug]['emperor']
+if this_server_type=='haproxy':
+    haproxy_server = parms['haproxy']['haproxy']
+    if parms['haproxy']['haproxy'].has_key(cluster_slug):
+        if parms['haproxy']['haproxy'][cluster_slug].has_key('emperor'):
+            emperor = parms['haproxy']['haproxy'][cluster_slug]['emperor']
+        else:
+            emperor = False
     else:
         emperor = False
 else:
     emperor = False
+    
   
 
 
