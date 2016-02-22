@@ -3,7 +3,8 @@ command = /usr/bin/python /var/haproxy_zookeeper.py
 autostart=true
 #autorestart=true
 autorestart=unexpected
-
+user=root
+environment=HOME="/root"
 stopsignal=KILL
 stopasgroup = true
 killasgroup = true
