@@ -12,46 +12,168 @@ import string
 from pprint import pprint
 import logging #https://kazoo.readthedocs.org/en/latest/basic_usage.html
 logging.basicConfig()
-
-"""
-0) load zookeeper from file written by chef
-1) get ip address from file
-2) register server
-3) If change in servers then rerun chef
-
-How to fix sharding 
-
-"haproxy":{"elasticsearch":"127.0.0.1:9200",
-               "sentinal":"127.0.0.1:26379",
-               "kafka":"127.0.0.1:9092",
-               "zookeeper":"127.0.0.1:2181",
-               "druidbroker":"127.0.0.1:8082"   
-    },
-
-1)     
-"haproxy":[{"server_type": "elasticsearch",
-            "address":"127.0.0.1",
-            "port":"9200"
-            "shard":"True"}
-}\
-
-2) Or for every server type, if not found then check if beciase of shard
-   then issue solved.  This is prob the easiest
-  
+from bootops.classes import getparms
 
 
+def get_emperor_hash():
+    emperor_hash = {}
+    for server_type, meta in parms.iteritems():
+        if isinstance(meta, dict):
+            if meta.has_key(datacenter):
+                if meta[datacenter].has_key(environment):
+                    if meta[datacenter][environment].has_key(location):
+                        #print meta[datacenter][environment][location].keys()
+                        for cs in meta[datacenter][environment][location].keys():
+                            if meta[datacenter][environment][location][cs].has_key("emperor_domain"):
+                                temp = '%s-%s' % (server_type,cs)
+                                
+                                emperor_hash[temp] = {}
+                                if cs=='nocluster':
+                                    base = "%s-%s-%s-%s-%s" % (server_type,slug,datacenter,environment,location)
+                                else:
+                                    base = "%s-%s-%s-%s-%s-%s" % (server_type,slug,datacenter,environment,location,cs)
+                                emperor_hash[temp]['base']=base
+                                emperor_hash[temp]['domain']=meta[datacenter][environment][location][cs]["emperor_domain"]
+                               
+    return emperor_hash
 
-"""
+def create_frontend(emperor_hash):
+    
+    server_type_app_hash = {}
+    
+#     server_type_app_hash['dccom-cl1'] = 'debt-cos.com'
+#     server_type_app_hash['dccom-cl2'] = '222.debt-cos.com'
+    
+    
+    
+    
+    acl_string = ''
+    for server_type,meta in emperor_hash.iteritems():
+        print server_type,meta['domain']
+        for domain in meta['domain']:
+            acl_string = acl_string + 'acl %s hdr(host) -i %s' % (server_type, domain) + '\n'
+        
+    backend_string = ''
+    for server_type,meta in emperor_hash.iteritems():
+        backend_string = backend_string + 'use_backend %s_backend if %s' % (server_type,server_type) + '\n'
+       
+    t = """
+    # Listen on port 80
+    bind *:80
+    
+    mode http
 
-# with open('ha_services.json') as data_file:    
-#     service_hash = json.load(data_file)
-#zk_host_list = '107.170.219.233'
+    # Define ACLs for each domain
+    %s
+    
+    # Figure out which backend (= VM) to use
+    %s
+    
+    """ % (acl_string,backend_string)
+
+    return t
+
+def create_backend(emperor_hash,base_ip_hash):
+    remote_port = 80
+    proxy_port = 80
+    mode = 'http'
+    temp_ha = []
+    for server_type,meta in emperor_hash.iteritems():
+
+        base = meta['base']
+        server_list = base_ip_hash[base] 
+        
+        temp = []
+        for index,ip in enumerate(list(server_list)):
+            temp.append('server %s-%s %s:%s check cookie s%s' % (server_type,index+1,ip,remote_port,index+1))   
+        temp = '\n'.join(temp)
+        
+        replace_values = { 'server_type':server_type,'mode':mode,'server_list':temp,'proxy_port':proxy_port,'remote_port':remote_port}
+        t = string.Template("""
+        
+        backend ${server_type}_backend
+           option httpclose
+           option forwardfor
+           http-request set-header X-Forwarded-Port %[dst_port]
+           http-request add-header X-Forwarded-Proto https if { ssl_fc }
+           
+           cookie SERVERID insert indirect nocache
+           mode $mode
+           option ${mode}log
+           balance roundrobin
+           $server_list
+        """)
+        temp_ha.append(t.substitute(replace_values))
+    temp_ha = '/n'.join(temp_ha)
+
+    return temp_ha
+    
+        
+        
+        
+     
+    
+    
 
 
-"""
-haproxy name server_type-cluster_slug
+    
+def my_func(event):
+    # check to see what the children are now
+    path = event.path
+    addresses = zk.get_children(event.path)
+    create_cgf(path,addresses)  
 
-"""
+def get_ip_encode(children):
+
+    ip_encode = ''.join(list(children))
+    ip_encode = base64.b64encode(ip_encode)
+    return ip_encode
+
+while True:
+    parms = getparms.get_parms(slug='seo')
+    environment = parms['environment']
+    location = parms['location']
+    datacenter = parms['datacenter']
+    slug = parms['slug']['slug']
+
+    
+    emperor_hash = get_emperor_hash()
+    base_ip_hash = {}
+#     for key,value in emperor_hash.iteritems():
+#         path = '/%s/' % value['base']
+#         exists = zk.exists(path)
+#         if exists:
+#             children = zk.get_children(path, watch=my_func)
+#             ip_encode = get_ip_encode(children)
+#             base_ip_hash[value['base']]=list(children)
+    
+    base_ip_hash['dccom-seo-aws-production-east']=['127.0.0.1']
+    pprint(emperor_hash)
+    haproxy_frontend = create_frontend(emperor_hash)
+    haproxy_backend = create_backend(emperor_hash,base_ip_hash)
+    
+    print haproxy_frontend
+    print haproxy_backend
+    
+    ha_proxy_config = '%s/n%s' % (haproxy_frontend,haproxy_backend)
+
+
+
+    exit()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 zk_chksum_init = hashlib.md5(open('/var/zookeeper_hosts.json', 'rb').read()).hexdigest()
 
@@ -246,11 +368,7 @@ def create_cgf(path,addresses,server_type,meta):
     sys.stdout.flush()
     sys.stderr.flush()
     
-def my_func(event):
-    # check to see what the children are now
-    path = event.path
-    addresses = zk.get_children(event.path)
-    create_cgf(path,addresses)
+
 
 def get_service_hash(settings_path,server_type):
     fn = "%s/server_data_bag/%s.json" % (settings_path,server_type)
@@ -305,11 +423,7 @@ def get_service_hash(settings_path,server_type):
         
     return service_hash, zookeeper_path_list
 
-def get_ip_encode(children):
-    
-    ip_encode = ''.join(list(children))
-    ip_encode = base64.b64encode(ip_encode)
-    return ip_encode
+
  
 while True:
     service_hash, zookeeper_path_list = get_service_hash(settings_path,this_server_type)
