@@ -31,7 +31,7 @@ else:
     settings_path = "/home/ubuntu/workspace/seo-settings"
     this_server_type = "dccom"
        
-parms = getparms.get_parms(slug='feed')
+parms = getparms.get_parms()
 environment = parms['environment']
 location = parms['location']
 datacenter = parms['datacenter']
