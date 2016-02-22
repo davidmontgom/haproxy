@@ -1,3 +1,24 @@
+server_type = node.name.split('-')[0]
+slug = node.name.split('-')[1] 
+datacenter = node.name.split('-')[2]
+environment = node.name.split('-')[3]
+location = node.name.split('-')[4]
+cluster_slug = File.read("/var/cluster_slug.txt")
+cluster_slug = cluster_slug.gsub(/\n/, "") 
+
+data_bag("meta_data_bag")
+git = data_bag_item("meta_data_bag", "git")
+git_account = git["git_account"]
+git_host = git["git_host"]
+
+if node.chef_environment == "production"
+    branch_name = "master"
+    bootops_branch_name = "master"
+else
+    branch_name = node.chef_environment
+    bootops_branch_name = "development"
+end
+
 =begin
 ha_services = node["haproxy"]
 ha_services_json=ha_services.to_json
@@ -9,6 +30,21 @@ file "/var/ha_services.json" do
   content "#{ha_services_json}"
 end
 =end
+
+git "/var/bootops" do
+    repository "git@bitbucket.org:davidmontgom/bootops.git"
+    revision bootops_branch_name
+    action :sync
+    user "root"
+end
+bash "install bootops" do
+  user "root"
+  code <<-EOH
+    cd /var/bootops
+    /usr/bin/python setup.py install
+  EOH
+  action :run
+end
 
 
 bash "haproxy_template" do
