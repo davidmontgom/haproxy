@@ -74,6 +74,13 @@ directory "/etc/haproxy/conf.d" do
   action :create
 end
 
+directory "/etc/haproxy/ssl" do
+  mode "0600"
+  owner 'root'
+  group 'root'
+  action :create
+end
+
 template "/etc/default/haproxy" do
     path "/etc/default/haproxy"
     source "haproxy.erb"
