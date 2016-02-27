@@ -395,7 +395,7 @@ frontend public
         
         frontend_list = []
         for server_type in emperor_hash.keys():
-            temp = """use_backend  backend %s_backend if host_%s""" % (server_type,server_type)
+            temp = """use_backend  %s_backend if host_%s""" % (server_type,server_type)
             frontend_list.append(temp)
         use_backend = '\n'.join(frontend_list)
             
