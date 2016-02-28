@@ -353,7 +353,7 @@ class haproxy(object):
                 backend ${server_type}_backend
                    mode $mode
                    option ${mode}log
-                   balance roundrobin
+                   balance roundrobin 
                 """)
                 temp_ha = t.substitute(replace_values)
                 temp_ha_list.append(temp_ha)
@@ -366,11 +366,6 @@ class haproxy(object):
                         proxy_port = meta['frontend']['remote_port']
                     remote_port = meta['frontend']['remote_port']
                     host = meta['frontend']['host']
-                    
-                    temp = []
-                    for index,ip in enumerate(list(base_ip_hash[base])):
-                        temp.append('server %s-%s %s:%s check' % (server_type,index+1,ip,remote_port))   
-                    temp = '\n'.join(temp)
  
                     replace_values = { 'server_type': meta['frontend']['name'],'mode':mode}
                     t = string.Template("""
