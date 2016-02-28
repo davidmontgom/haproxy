@@ -10,10 +10,20 @@ import psutil
 import base64 
 import hashlib
 import string
+import glob
+import subprocess
+from pytz import timezone
+import pytz
+import datetime
+from datetime import timedelta
 from pprint import pprint
 import logging #https://kazoo.readthedocs.org/en/latest/basic_usage.html
 logging.basicConfig()
 from bootops.classes import getparms
+
+
+
+
 
 """
 [WARNING] 055/173408 (19627) : parsing [/etc/haproxy/haproxy.cfg:79] : a 'http-request' rule placed after a 'redirect' rule will still be processed before.
@@ -120,6 +130,127 @@ def get_type():
         match_type = None
     return emperor, match_type
 
+class letsencrypt(object):
+    
+    def __init__(self,emperor_hash):
+        
+        self.emperor_hash = emperor_hash
+        self.EXPIRE_THRESHOLD = 5
+        
+    def get_domain_list(self):
+        
+        self.domain_list = []
+        for server_type,meta in self.emperor_hash.iteritems():
+            for domain_hash in meta['domain']:
+                domain = domain_hash.keys()[0]
+                self.domain_list.append(domain)
+                
+                
+        return self.domain_list
+                
+    def create(self):
+        
+        d = '-d '.join(self.domain_list)
+        
+        cmd = """
+        /opt/letsencrypt/letsencrypt-auto --email admin@example.com --agree-tos --renew-by-default \
+                                          --standalone --standalone-supported-challenges http-01 certonly \
+                                          %s 
+        """ % (d)
+        
+    def update(self):
+        
+        """
+          /opt/letsencrypt/letsencrypt-auto --email admin@example.com --agree-tos --renew-by-default \
+                                          --standalone --standalone-supported-challenges http-01 certonly \
+                                          -d www3.debt-consolidation.com 
+        
+        """
+        
+        # dccom-development.govspring.com
+        # http://www3.debt-consolidation.com/
+        d = '-d '.join(self.domain_list)
+         
+        cmd = """
+        /opt/letsencrypt/letsencrypt-auto --email admin@example.com --agree-tos --renew-by-default \
+                                          --standalone --standalone-supported-challenges http-01 --http-01-port 9999 certonly \
+                                          -d www3.debt-consolidation.com 
+
+        """  % (d)
+        
+    def get_existing_haproxy_ssl_domains(self):
+        
+        ssl_files = []
+        for name in glob.glob('/etc/haproxy/ssl/*'):
+            ssl_files.append(name.split('/')[-1])
+            
+        self.ssl_files = ssl_files
+        return ssl_files
+    
+    def get_existing_letsencrypt_ssl_domains(self):
+        
+        letsencrypt_dirs = []
+        for name in glob.glob('/etc/letsencrypt/live/*'):
+             letsencrypt_dirs.append(name.split('/')[-1])
+            
+        return  letsencrypt_dirs
+    
+    def create_and_move_pem_to_ssl(self,domain):
+        #cat /etc/letsencrypt/live/www3.debt-consolidation.com/{fullchain.pem,privkey.pem} > /etc/haproxy/ssl/www3.debt-consolidation.com.pem
+        cmd = """cat /etc/letsencrypt/live/%s/{fullchain.pem,privkey.pem} > /etc/haproxy/ssl/%s.pem""" % domain
+        os.system(cmd)
+    
+    def get_ssl_exists(self,domain):
+        
+        ssl_files = self.get_existing_haproxy_ssl_domains()
+        if domain in ssl_files:
+            return True
+        else:
+            return False
+    
+    def get_domain_expire_date_hash(self):
+        
+        """
+        easy_install pyopenssl
+        notAfter=May 27 02:03:00 2016 GMT
+        """
+        
+        domain_expire_hash = {}
+        for domain in ssl_files:
+            cmd = "openssl x509 -enddate -noout -in /etc/haproxy/ssl/%s " % domain
+            p = subprocess.Popen(cmd, shell=True,stderr=subprocess.STDOUT,stdout=subprocess.PIPE,executable="/bin/bash")
+            out = p.stdout.readline().strip()
+            out = out.split('=')[1][:-4]
+            expire_date = datetime.datetime.strptime(out, "%b %d %H:%M:00 %Y")
+            days_left = (datetime.datetime.now()-expire).days
+            domain_expire_hash[domain] = days_left
+            
+        return domain_expire_hash
+        
+    def haproxy_master_push(self,haproxy_server_list):
+        
+        """
+        I am master and I will push to slaves on renew\
+        to /etc/haproxy/ssl
+        
+        """
+        
+        pass
+        
+        
+            
+    def run(self):
+        
+        """
+        if domain not in letsencrypt -> create
+        
+        openssl x509 -enddate -noout -in file.pem
+        
+        """
+        
+        
+        pass
+        
 class haproxy(object):
     
     def __init__(self,parms,server_type,emperor=False,match_type=None,
@@ -214,6 +345,47 @@ class haproxy(object):
                 base = "%s-%s-%s-%s-%s" % (server_type_pure,self.slug,self.datacenter,self.environment,self.location)
             
             temp = []
+            
+            #This is becuase haproxh fails if no backend even if no servers
+            if base_ip_hash.has_key(base)==False:
+                replace_values = { 'server_type':server_type,'mode':mode}
+                t = string.Template("""
+                backend ${server_type}_backend
+                   mode $mode
+                   option ${mode}log
+                   balance roundrobin
+                """)
+                temp_ha = t.substitute(replace_values)
+                temp_ha_list.append(temp_ha)
+                
+                if meta.has_key('frontend'):
+                    mode = meta['frontend']['mode']
+                    if meta['frontend'].has_key('proxy_port'):
+                        proxy_port = meta['frontend']['proxy_port']
+                    else:
+                        proxy_port = meta['frontend']['remote_port']
+                    remote_port = meta['frontend']['remote_port']
+                    host = meta['frontend']['host']
+                    
+                    temp = []
+                    for index,ip in enumerate(list(base_ip_hash[base])):
+                        temp.append('server %s-%s %s:%s check' % (server_type,index+1,ip,remote_port))   
+                    temp = '\n'.join(temp)
+ 
+                    replace_values = { 'server_type': meta['frontend']['name'],'mode':mode}
+                    t = string.Template("""
+                    backend ${server_type}_backend
+                       mode $mode
+                       option ${mode}log
+                       balance roundrobin
+                    """)
+                    temp_ha = t.substitute(replace_values)
+                    temp_ha_list.append(temp_ha)
+                
+                
+                
+                
+            
             if base_ip_hash.has_key(base):
                 for index,ip in enumerate(list(base_ip_hash[base])):
                     temp.append('server %s-%s %s:%s check' % (server_type,index+1,ip,remote_port))   

@@ -66,7 +66,7 @@ https://blog.brixit.nl/automating-letsencrypt-and-haproxy
 2) move the certs
 
 3) reload
-cat dashboard-cloud.feed-galaxy.com/{fullchain.pem,privkey.pem} > /etc/haproxy/ssl/dashboard-cloud.feed-galaxy.com.pem
+cat dccomm-development.govspring.com/{fullchain.pem,privkey.pem} > /etc/haproxy/ssl/dccomm-development.govspring.com.pem
 
 /opt/letsencrypt/letsencrypt-auto --email admin@example.com --agree-tos --renew-by-default --standalone --standalone-supported-challenges http-01 --http-01-port 9999 certonly  -d dashboard-cloud.feed-galaxy.com 
 
