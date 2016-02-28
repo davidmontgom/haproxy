@@ -600,30 +600,38 @@ frontend in_https
         for server_type,meta in emperor_hash.iteritems():
     
             base = meta['base']
-            server_list = base_ip_hash[base] 
-            
-            temp = []
-            for index,ip in enumerate(list(server_list)):
-                temp.append('server %s-%s %s:%s check cookie s%s' % (server_type,index+1,ip,remote_port,index+1))   
-            temp = '\n'.join(temp)
-            
-            replace_values = { 'server_type':server_type,'mode':mode,'server_list':temp,'proxy_port':proxy_port,'remote_port':remote_port}
-            t = string.Template("""
-            
-            backend ${server_type}_backend
-               option httpclose
-               option forwardfor
-               http-request set-header X-Forwarded-Port %[dst_port]
-               http-request add-header X-Forwarded-Proto https if { ssl_fc }
-               
-               cookie SERVERID insert indirect nocache
-               mode $mode
-               option ${mode}log
-               balance roundrobin
-               $server_list
-            """)
-            temp_ha.append(t.substitute(replace_values))
+            if base_ip_hash.has_key(base):
+                server_list = base_ip_hash[base] 
+                
+                temp = []
+                if server_list:
+                    for index,ip in enumerate(list(server_list)):
+                        temp.append('server %s-%s %s:%s check cookie s%s' % (server_type,index+1,ip,remote_port,index+1))   
+                    temp = '\n'.join(temp)
+                else:
+                    temp = ''
+                
+                if temp:
+                    replace_values = { 'server_type':server_type,'mode':mode,'server_list':temp,'proxy_port':proxy_port,'remote_port':remote_port}
+                    t = string.Template("""
+                    
+                    backend ${server_type}_backend
+                       option httpclose
+                       option forwardfor
+                       http-request set-header X-Forwarded-Port %[dst_port]
+                       http-request add-header X-Forwarded-Proto https if { ssl_fc }
+                       
+                       cookie SERVERID insert indirect nocache
+                       mode $mode
+                       option ${mode}log
+                       balance roundrobin
+                       $server_list
+                    """)
+                    temp_ha.append(t.substitute(replace_values))
+
+
         temp_ha = '\n'.join(temp_ha)
+    
     
         return temp_ha
         
