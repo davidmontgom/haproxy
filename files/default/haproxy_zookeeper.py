@@ -600,6 +600,26 @@ frontend in_https
         for server_type,meta in emperor_hash.iteritems():
     
             base = meta['base']
+            
+            if base_ip_hash.has_key(base)==False:
+                
+                replace_values = { 'server_type':server_type,'mode':mode,'proxy_port':proxy_port,'remote_port':remote_port}
+                t = string.Template("""
+                
+                backend ${server_type}_backend
+                   option httpclose
+                   option forwardfor
+                   http-request set-header X-Forwarded-Port %[dst_port]
+                   http-request add-header X-Forwarded-Proto https if { ssl_fc }
+                   
+                   cookie SERVERID insert indirect nocache
+                   mode $mode
+                   option ${mode}log
+                   balance roundrobin
+                """)
+                temp_ha.append(t.substitute(replace_values))
+            
+            
             if base_ip_hash.has_key(base):
                 server_list = base_ip_hash[base] 
                 
