@@ -377,10 +377,6 @@ class haproxy(object):
                     temp_ha = t.substitute(replace_values)
                     temp_ha_list.append(temp_ha)
                 
-                
-                
-                
-            
             if base_ip_hash.has_key(base):
                 for index,ip in enumerate(list(base_ip_hash[base])):
                     temp.append('server %s-%s %s:%s check' % (server_type,index+1,ip,remote_port))   
@@ -597,15 +593,27 @@ frontend in_https
         proxy_port = 80
         mode = 'http'
         temp_ha = []
+
         for server_type,meta in emperor_hash.iteritems():
     
             base = meta['base']
-            
-            if base_ip_hash.has_key(base)==False:
+            if base_ip_hash.has_key(base):
+                server_list = base_ip_hash[base] 
+                temp = []
+                if server_list:
+                    for index,ip in enumerate(list(server_list)):
+                        temp.append('server %s-%s %s:%s check cookie s%s' % (server_type,index+1,ip,remote_port,index+1))   
+                    temp = '\n'.join(temp)
+                else:
+                    temp = None
                 
-                replace_values = { 'server_type':server_type,'mode':mode,'proxy_port':proxy_port,'remote_port':remote_port}
+                if temp:
+                    replace_values = { 'server_type':server_type,'mode':mode,'server_list':temp,'proxy_port':proxy_port,'remote_port':remote_port}
+                else:
+                    replace_values = { 'server_type':server_type,'mode':mode,'server_list':'','proxy_port':proxy_port,'remote_port':remote_port}
+                    
                 t = string.Template("""
-                
+                    
                 backend ${server_type}_backend
                    option httpclose
                    option forwardfor
@@ -616,43 +624,12 @@ frontend in_https
                    mode $mode
                    option ${mode}log
                    balance roundrobin
+                   $server_list
                 """)
                 temp_ha.append(t.substitute(replace_values))
-            
-            
-            if base_ip_hash.has_key(base):
-                server_list = base_ip_hash[base] 
-                
-                temp = []
-                if server_list:
-                    for index,ip in enumerate(list(server_list)):
-                        temp.append('server %s-%s %s:%s check cookie s%s' % (server_type,index+1,ip,remote_port,index+1))   
-                    temp = '\n'.join(temp)
-                else:
-                    temp = ''
-                
-                if temp:
-                    replace_values = { 'server_type':server_type,'mode':mode,'server_list':temp,'proxy_port':proxy_port,'remote_port':remote_port}
-                    t = string.Template("""
-                    
-                    backend ${server_type}_backend
-                       option httpclose
-                       option forwardfor
-                       http-request set-header X-Forwarded-Port %[dst_port]
-                       http-request add-header X-Forwarded-Proto https if { ssl_fc }
-                       
-                       cookie SERVERID insert indirect nocache
-                       mode $mode
-                       option ${mode}log
-                       balance roundrobin
-                       $server_list
-                    """)
-                    temp_ha.append(t.substitute(replace_values))
 
 
         temp_ha = '\n'.join(temp_ha)
-    
-    
         return temp_ha
         
     def get_zk_base_servers(self,base_list):
@@ -720,7 +697,7 @@ frontend in_https
             %s
             %s
             """ % (front_end_config_http,front_end_confg_ssl,backend_config)
-            print ha_proxy_config
+
             
             #check for change
             haproxy_encode = hashlib.md5(ha_proxy_config).hexdigest()
@@ -739,8 +716,7 @@ frontend in_https
                     os.system("cat /etc/haproxy/haproxy.cfg.orig /etc/haproxy/conf.d/emperor.cfg >> /etc/haproxy/haproxy.cfg")
                     os.system('/usr/sbin/service haproxy reload')
                     print "reloading haproxy"
-                
-            #Reload
+
         elif self.match_type:
             if self.base_ip_hash:
                 server_list = self.base_ip_hash[self.base_list[0]]
@@ -926,7 +902,8 @@ while True:
     if not emperor and not match_type:
         if os.path.isfile('/etc/haproxy/conf.d/service.cfg')==False:
             reload = True
-            
+      
+
     if reload:
         if emperor:
             emperor_hash = get_emperor_hash()
