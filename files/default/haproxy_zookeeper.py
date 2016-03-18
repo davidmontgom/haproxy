@@ -822,13 +822,21 @@ def get_base_list():
             base_list.append(meta['base'])
     else:
         for key,meta in parms[this_server_type]['haproxy'].iteritems():
+            
+            # Use e.g. RDS postgre or mysql or redis
+            if meta.has_key('services') and meta['services']==True:
+                use_services = 'services/'
+            else:
+                use_services = ''
+                
+            
             if key.find('-')>=0:
                 server_type,cs = key.split('-')
-                base = "%s-%s-%s-%s-%s-%s" % (server_type,slug,datacenter,environment,location,cs)
+                base = "%s%s-%s-%s-%s-%s-%s" % (use_services,server_type,slug,datacenter,environment,location,cs)
             else:
                 server_type = key
-                base = "%s-%s-%s-%s-%s" % (server_type,slug,datacenter,environment,location)
-            base_list.append(base)
+                base = "%s%s-%s-%s-%s-%s" % (use_services,server_type,slug,datacenter,environment,location)
+            base_list.append(base.strip())
     return base_list
 
 def my_func(event):
