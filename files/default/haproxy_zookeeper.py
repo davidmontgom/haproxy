@@ -341,13 +341,18 @@ class haproxy(object):
             remote_port = meta['remote_port']
             host = meta['host']
             
+            if meta.has_key('services') and meta['services']==True:
+                use_services = 'services/'
+            else:
+                use_services = ''
+            
             if server_type.find('-')>=0:
                 server_type_pure,cluster_slug = server_type.split('-')
-                base = "%s-%s-%s-%s-%s-%s" % (server_type_pure,self.slug,self.datacenter,self.environment,self.location,cluster_slug)
+                base = "%s%s-%s-%s-%s-%s-%s" % (use_services,server_type_pure,self.slug,self.datacenter,self.environment,self.location,cluster_slug)
             else:
                 server_type_pure =server_type
-                base = "%s-%s-%s-%s-%s" % (server_type_pure,self.slug,self.datacenter,self.environment,self.location)
-            
+                base = "%s%s-%s-%s-%s-%s" % (use_services,server_type_pure,self.slug,self.datacenter,self.environment,self.location)
+            base = base.strip()
             temp = []
             
             #This is becuase haproxh fails if no backend even if no servers
