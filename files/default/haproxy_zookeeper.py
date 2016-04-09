@@ -636,6 +636,23 @@ frontend in_https
                    $server_list
                 """)
                 temp_ha.append(t.substitute(replace_values))
+            else:
+                #Is is the case where no servers.  Still have to add else haproxhy will bomb
+                replace_values = { 'server_type':server_type,'mode':mode,'proxy_port':proxy_port,'remote_port':remote_port}
+                t = string.Template("""
+                backend ${server_type}_backend
+                   option httpclose
+                   option forwardfor
+                   http-request set-header X-Forwarded-Port %[dst_port]
+                   http-request add-header X-Forwarded-Proto https if { ssl_fc }
+                   
+                   cookie SERVERID insert indirect nocache
+                   mode $mode
+                   option ${mode}log
+                   balance roundrobin
+                """)
+                temp_ha.append(t.substitute(replace_values))
+                
 
 
         temp_ha = '\n'.join(temp_ha)
@@ -760,6 +777,7 @@ frontend in_https
                         print "reloading haproxy"
         else:
             print 'backend services'
+            
             front_end_config = self.create_service_frontend()
             backend_config = self.create_service_backed(self.base_ip_hash)
             #print front_end_config
@@ -895,6 +913,8 @@ work on ssl coldstart
 
 while True:
 
+    parms = getparms.get_parms()
+    
     zk_chksum = hashlib.md5(open('/var/zookeeper_hosts.json', 'rb').read()).hexdigest()
     if zk_chksum!=zk_chksum_init:
         zk = get_zk_conn()
@@ -910,6 +930,7 @@ while True:
        
             
     reload = False
+    
     if emperor:
         if os.path.isfile('/etc/haproxy/conf.d/emperor.cfg')==False:
             reload = True
@@ -920,7 +941,8 @@ while True:
         if os.path.isfile('/etc/haproxy/conf.d/service.cfg')==False:
             reload = True
       
-
+    
+    print 'reload:',reload
     if reload:
         if emperor:
             emperor_hash = get_emperor_hash()
@@ -934,8 +956,7 @@ while True:
             if exists:
                 address = zk.get_children(path)
                 base_ip_hash[base]=list(address)
-                
-        
+          
         ha = haproxy(parms,this_server_type,emperor,match_type,cluster_slug,base_list,emperor_hash,base_ip_hash,debug)
         ha.generate()
         
