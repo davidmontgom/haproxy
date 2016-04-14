@@ -7,14 +7,18 @@ git "/var/haproxy-acme-validation-plugin" do
   user "root"
 end
 
+template "/var/cert-renewal-haproxy.sh" do
+  path "/var/cert-renewal-haproxy.sh"
+  source "cert-renewal-haproxy.sh.erb"
+  owner "root"
+  group "root"
+  mode "0755"
+end
+
 =begin
-bash "letsencrypt_help" do
-user "root"
-code <<-EOH
-  git clone https://github.com/janeczku/haproxy-acme-validation-plugin.git
-  
-  touch /var/chef/cache/letsencrypt_help.lock
-EOH
-action :run
-not_if {File.exists?("/var/chef/cache/letsencrypt_help.lock")}
+cron 'cert_renew' do
+  hour '5'
+  minute '0'
+  command '/bin/sh /var/cert-renewal-haproxy.sh'
+end
 =end

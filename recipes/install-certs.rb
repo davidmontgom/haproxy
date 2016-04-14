@@ -26,6 +26,7 @@ if ssl==true
   bash "letsencrypt_install_ssl" do
   user "root"
   code <<-EOH
+    cd /etc/letsencrypt/live/
     cat #{full_domain}/{fullchain.pem,privkey.pem} > /etc/haproxy/ssl/#{full_domain}.pem
     service haproxy reload
     touch /var/chef/cache/letsencrypt_install_ssl.lock

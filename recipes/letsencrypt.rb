@@ -45,9 +45,14 @@ if ssl==true
   bash "letsencrypt_install" do
   user "root"
   code <<-EOH
-    /opt/letsencrypt/letsencrypt-auto --email admin@example.com --agree-tos --renew-by-default \
-                                      --standalone --standalone-supported-challenges http-01 certonly \
-                                      -d #{full_domain}  
+    #/opt/letsencrypt/letsencrypt-auto --email admin@example.com --agree-tos --renew-by-default \
+    #                                  --standalone --standalone-supported-challenges http-01 certonly \
+    #                                  -d #{full_domain}  
+                                      
+    /opt/letsencrypt/letsencrypt-auto certonly --text --webroot --webroot-path /var/lib/haproxy \
+                                              -d #{full_domain}  --renew-by-default --agree-tos \
+                                              --email admin@example.com 
+                                                                           
     touch /var/chef/cache/letsencrypt_install.lock
   EOH
   action :run
