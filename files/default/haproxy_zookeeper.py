@@ -438,10 +438,18 @@ class haproxy(object):
         remote_port = self.haproxy_meta['remote_port']
         host = self.haproxy_meta['host']
         
+        acme1 = ' '
+        acme2 = ' '
+        if self.haproxy_meta.has_key('ssl') and self.haproxy_meta['ssl']==True:
+            acme1 = 'acl url_acme_http01 path_beg /.well-known/acme-challenge/'
+            acme2 = 'http-request use-service lua.acme-http01 if METH_GET url_acme_http01'
         
-        replace_values = { 'server_type':server_type,'mode':mode,'proxy_port':proxy_port,'remote_port':remote_port,'host':host}
+        
+        replace_values = { 'server_type':server_type,'mode':mode,'proxy_port':proxy_port,'remote_port':remote_port,'host':host, 'acme1':acme1, 'acme2':acme2}
         t = string.Template("""
         frontend ${server_type}_front
+           ${acme1}
+           ${acme2}
            bind ${host}:${proxy_port}
            mode $mode
            option ${mode}log
@@ -748,18 +756,8 @@ frontend in_https
             if self.debug==False:
                 if  os.path.isfile('/etc/haproxy/conf.d/ha_enocde_%s' % haproxy_encode)==False:
                     os.system('rm /etc/haproxy/conf.d/ha_enocde_*')
-                    os.system('touch /etc/haproxy/conf.d/ha_enocde_%s' 
-                              
-                              
-                              
-                              
-                              
-                              
-                              
-                              
-                              
-                              
-                              % haproxy_encode)
+                    os.system('touch /etc/haproxy/conf.d/ha_enocde_%s' % haproxy_encode)
+                    
                     f = open('/etc/haproxy/conf.d/emperor.cfg','w')
                     f.write(ha_proxy_config)
                     f.close()
