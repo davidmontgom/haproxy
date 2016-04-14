@@ -25,7 +25,7 @@ else
     use_acme = ' '
 end
 
-
+ 
 =begin
 ha_services = node["haproxy"]
 ha_services_json=ha_services.to_json
