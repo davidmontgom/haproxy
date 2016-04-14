@@ -23,6 +23,7 @@ end
   
 full_domain = "#{subdomain}.#{domain}"
 
+
 git "/opt/letsencrypt" do
   repository "https://github.com/letsencrypt/letsencrypt"
   action :sync

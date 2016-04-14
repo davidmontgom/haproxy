@@ -240,9 +240,7 @@ class letsencrypt(object):
         """
         
         pass
-        
-        
-            
+                 
     def run(self):
         
         """
@@ -731,7 +729,18 @@ frontend in_https
             if self.debug==False:
                 if  os.path.isfile('/etc/haproxy/conf.d/ha_enocde_%s' % haproxy_encode)==False:
                     os.system('rm /etc/haproxy/conf.d/ha_enocde_*')
-                    os.system('touch /etc/haproxy/conf.d/ha_enocde_%s' % haproxy_encode)
+                    os.system('touch /etc/haproxy/conf.d/ha_enocde_%s' 
+                              
+                              
+                              
+                              
+                              
+                              
+                              
+                              
+                              
+                              
+                              % haproxy_encode)
                     f = open('/etc/haproxy/conf.d/emperor.cfg','w')
                     f.write(ha_proxy_config)
                     f.close()
@@ -939,6 +948,8 @@ while True:
             reload = True
     if not emperor and not match_type:
         if os.path.isfile('/etc/haproxy/conf.d/service.cfg')==False:
+            reload = True
+    if os.path.isfile('/etc/haproxy/haproxy.cfg')==False:
             reload = True
       
     
