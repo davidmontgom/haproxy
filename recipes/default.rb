@@ -19,6 +19,13 @@ else
     bootops_branch_name = "development"
 end
 
+if File.exists?("/var/haproxy-acme-validation-plugin/acme-http01-webroot.lua")
+    use_acme = 'lua-load /etc/haproxy/acme-http01-webroot.lua'
+else
+    use_acme = ' '
+end
+
+
 =begin
 ha_services = node["haproxy"]
 ha_services_json=ha_services.to_json
@@ -106,7 +113,10 @@ template "/etc/haproxy/haproxy.cfg.orig" do
     owner "root"
     group "root"
     mode "0755"
+    variables lazy {{:use_acme => use_acme}}
 end
+
+
  
 
 bash "haproxy_template" do

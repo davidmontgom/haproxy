@@ -519,7 +519,9 @@ class haproxy(object):
         return temp_ha
     
     def create_emperor_frontend_http(self,emperor_hash):
-    
+        
+        
+        #"emperor_domain": {"cluster_slug":"general","domains":[{"dev.debt-consolidation.com":{"ssl":true}}] },
         server_type_app_hash = {}
         
         acl_string = ''
@@ -527,6 +529,10 @@ class haproxy(object):
             print server_type,meta['domain']
             for domain_hash in meta['domain']:
                 domain = domain_hash.keys()[0]
+                if domain_hash[domain].has_key('ssl') and domain_hash[domain]['ssl']==True:
+                    acl_string = acl_string + 'acl url_acme_http01 path_beg /.well-known/acme-challenge/' + '\n'
+                    acl_string = acl_string + 'http-request use-service lua.acme-http01 if METH_GET url_acme_http01' + '\n'
+                    
                 acl_string = acl_string + 'acl %s hdr(host) -i %s' % (server_type, domain) + '\n'
             
         backend_string = ''
