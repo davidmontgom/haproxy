@@ -157,10 +157,25 @@ class letsencrypt(object):
         d = '-d '.join(self.domain_list)
         
         cmd = """
-        /opt/letsencrypt/letsencrypt-auto --email admin@example.com --agree-tos --renew-by-default \
-                                          --standalone --standalone-supported-challenges http-01 certonly \
-                                          %s 
-        """ % (d)
+            /opt/letsencrypt/letsencrypt-auto --text --webroot --webroot-path /var/lib/haproxy \
+                                              -d %s --renew-by-default --agree-tos \
+                                              --email your@email.com """ % (d)
+                                              
+            
+            #/opt/letsencrypt/letsencrypt-auto --text --webroot --webroot-path /var/lib/haproxy -d dev.debt-consolidation.com --renew-by-default --agree-tos --email your@email.com 
+                   
+                   
+            #Worked
+            #/opt/letsencrypt/letsencrypt-auto certonly --webroot --webroot-path /var/lib/haproxy -d dev.debt-consolidation.com --renew-by-default --agree-tos --email your@email.com 
+                                        
+           
+        
+        
+#         cmd = """
+#         /opt/letsencrypt/letsencrypt-auto --email admin@example.com --agree-tos --renew-by-default \
+#                                           --standalone --standalone-supported-challenges http-01 certonly \
+#                                           %s 
+#         """ % (d)
         
     def update(self):
         
@@ -174,13 +189,19 @@ class letsencrypt(object):
         # dccom-development.govspring.com
         # http://www3.debt-consolidation.com/
         d = '-d '.join(self.domain_list)
-         
+        
+        
         cmd = """
-        /opt/letsencrypt/letsencrypt-auto --email admin@example.com --agree-tos --renew-by-default \
-                                          --standalone --standalone-supported-challenges http-01 --http-01-port 9999 certonly \
-                                          -d www3.debt-consolidation.com 
-
-        """  % (d)
+            /opt/letsencrypt/letsencrypt-auto --text --webroot --webroot-path /var/lib/haproxy \
+                                              -d %s --renew-by-default --agree-tos \
+                                              --email your@email.com """ % (d)
+         
+#         cmd = """
+#         /opt/letsencrypt/letsencrypt-auto --email admin@example.com --agree-tos --renew-by-default \
+#                                           --standalone --standalone-supported-challenges http-01 --http-01-port 9999 certonly \
+#                                           -d www3.debt-consolidation.com 
+# 
+#         """  % (d)
         
     def get_existing_haproxy_ssl_domains(self):
         
@@ -444,7 +465,7 @@ class haproxy(object):
             acme1 = 'acl url_acme_http01 path_beg /.well-known/acme-challenge/'
             acme2 = 'http-request use-service lua.acme-http01 if METH_GET url_acme_http01'
         
-        
+    
         replace_values = { 'server_type':server_type,'mode':mode,'proxy_port':proxy_port,'remote_port':remote_port,'host':host, 'acme1':acme1, 'acme2':acme2}
         t = string.Template("""
         frontend ${server_type}_front
@@ -734,6 +755,9 @@ frontend in_https
   
     def generate(self):
         
+        print 'match_type:',self.match_type
+        print 'emperor:',self.emperor
+
         is_reload = False
         if self.emperor:
             front_end_config_http = self.create_emperor_frontend_http(self.emperor_hash)
@@ -770,6 +794,8 @@ frontend in_https
                     print "reloading haproxy"
 
         elif self.match_type:
+            
+            print 'asswipe'
             if self.base_ip_hash:
                 server_list = self.base_ip_hash[self.base_list[0]]
                 front_end_config_http = self.create_match_type_frontend_http()
@@ -784,6 +810,7 @@ frontend in_https
                 %s
                 """ % (front_end_config_http,front_end_confg_ssl,backend_config)
                 print ha_proxy_config
+                
                  #check for change
                 haproxy_encode = hashlib.md5(ha_proxy_config).hexdigest()
                 reload = False
@@ -938,6 +965,8 @@ work on ssl coldstart
 """
 
 while True:
+    
+    
 
     parms = getparms.get_parms()
     
@@ -954,6 +983,8 @@ while True:
             children = zk.get_children(path, watch=my_func)
             print path, children
        
+       
+    
             
     reload = False
     
@@ -969,8 +1000,8 @@ while True:
     if os.path.isfile('/etc/haproxy/haproxy.cfg')==False:
             reload = True
       
-    
     print 'reload:',reload
+
     if reload:
         if emperor:
             emperor_hash = get_emperor_hash()
@@ -993,6 +1024,7 @@ while True:
     sys.stderr.flush()
     print '-'*20
     time.sleep(1)
+    
 
 
 
