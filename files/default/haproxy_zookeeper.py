@@ -438,6 +438,7 @@ class haproxy(object):
         remote_port = self.haproxy_meta['remote_port']
         host = self.haproxy_meta['host']
         
+        
         replace_values = { 'server_type':server_type,'mode':mode,'proxy_port':proxy_port,'remote_port':remote_port,'host':host}
         t = string.Template("""
         frontend ${server_type}_front
@@ -525,14 +526,26 @@ class haproxy(object):
         server_type_app_hash = {}
         
         acl_string = ''
+        
+        
+        """
+        Add the below if any domain with use ssl
+        """
+        use_acme = False
+        for server_type,meta in emperor_hash.iteritems():
+            for domain_hash in meta['domain']:
+                domain = domain_hash.keys()[0]
+                if domain_hash[domain].has_key('ssl') and domain_hash[domain]['ssl']==True:
+                    use_acme = True      
+        if use_acme:
+            acl_string = acl_string + 'acl url_acme_http01 path_beg /.well-known/acme-challenge/' + '\n'
+            acl_string = acl_string + 'http-request use-service lua.acme-http01 if METH_GET url_acme_http01' + '\n'
+        
+        
         for server_type,meta in emperor_hash.iteritems():
             print server_type,meta['domain']
             for domain_hash in meta['domain']:
                 domain = domain_hash.keys()[0]
-                if domain_hash[domain].has_key('ssl') and domain_hash[domain]['ssl']==True:
-                    acl_string = acl_string + 'acl url_acme_http01 path_beg /.well-known/acme-challenge/' + '\n'
-                    acl_string = acl_string + 'http-request use-service lua.acme-http01 if METH_GET url_acme_http01' + '\n'
-                    
                 acl_string = acl_string + 'acl %s hdr(host) -i %s' % (server_type, domain) + '\n'
             
         backend_string = ''
