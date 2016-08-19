@@ -93,7 +93,7 @@ template "/etc/default/haproxy" do
     source "haproxy.erb"
     owner "root"
     group "root"
-    mode "0755"
+    mode "0700"
     notifies :restart, resources(:service => "haproxy")
 end
 
@@ -102,7 +102,7 @@ template "/etc/haproxy/haproxy.cfg" do
     source "haproxy.cfg.erb"
     owner "root"
     group "root"
-    mode "0755"
+    mode "0700"
     notifies :restart, resources(:service => "haproxy")
     not_if {File.exists?("/var/chef/cache/haproxy_template.lock")}
 end
@@ -112,7 +112,7 @@ template "/etc/haproxy/haproxy.cfg.orig" do
     source "haproxy.cfg.erb"
     owner "root"
     group "root"
-    mode "0755"
+    mode "0700"
     variables lazy {{:use_acme => use_acme}}
 end
 
@@ -134,7 +134,7 @@ end
 
 cookbook_file "/var/haproxy_zookeeper.py" do
   source "haproxy_zookeeper.py"
-  mode 00744
+  mode "700"
   notifies :run, "execute[restart_haproxy_health]"
   #notifies :restart, resources(:service => "supervisord")
 end
@@ -145,7 +145,7 @@ template "/etc/supervisor/conf.d/supervisord.haproxy.zookeeper.include.conf" do
   source "supervisord.haproxy.zookeeper.include.conf.erb"
   owner "root"
   group "root"
-  mode "0755"
+  mode "700"
   notifies :restart, resources(:service => "supervisord"), :immediately 
 end
 service "supervisord"
