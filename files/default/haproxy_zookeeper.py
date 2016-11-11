@@ -528,15 +528,25 @@ class haproxy(object):
             temp.append('server %s-%s %s:%s check cookie s%s' % (server_type,index+1,ip,remote_port,index+1))   
         temp = '\n'.join(temp)
         
-        replace_values = { 'server_type':server_type,'mode':mode,'server_list':temp,'proxy_port':proxy_port,'remote_port':remote_port,'host':host}
+        if self.haproxy_meta.has_key('use_ssl') and self.haproxy_meta['use_ssl']==True:
+            scheme_https = 'redirect scheme https if !{ ssl_fc }'
+            proto_https = 'http-request add-header X-Forwarded-Proto https if { ssl_fc }'
+        else:
+            scheme_https=''
+            proto_https=''
+            
+        
+        replace_values = {'scheme_https':scheme_https,'proto_https':proto_https,'server_type':server_type,'mode':mode,'server_list':temp,'proxy_port':proxy_port,'remote_port':remote_port,'host':host}
+        
+        
         t = string.Template("""
 
         backend ${server_type}_backend
            option httpclose
            option forwardfor
-           redirect scheme https if !{ ssl_fc }
+           ${scheme_https}
            http-request set-header X-Forwarded-Port %[dst_port]
-           http-request add-header X-Forwarded-Proto https if { ssl_fc }
+           ${proto_https}
            
            cookie SERVERID insert indirect nocache
            mode $mode
@@ -795,7 +805,6 @@ frontend in_https
 
         elif self.match_type:
             
-            print 'asswipe'
             if self.base_ip_hash:
                 server_list = self.base_ip_hash[self.base_list[0]]
                 front_end_config_http = self.create_match_type_frontend_http()
