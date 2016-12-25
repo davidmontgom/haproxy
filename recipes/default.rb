@@ -19,11 +19,33 @@ else
     bootops_branch_name = "development"
 end
 
+
+git "/var/haproxy-acme-validation-plugin" do
+  repository "https://github.com/janeczku/haproxy-acme-validation-plugin.git"
+  action :sync
+  user "root"
+end
+
+=begin
+cron 'cert_renew' do
+  minute '5'
+  hour '8'
+  day '*'
+  month '*'
+  weekday '6'
+  command '/bin/sh /var/haproxy-acme-validation-plugin/cert-renewal-haproxy.sh'
+end
+#5 8 * * 6 /usr/bin/cert-renewal-haproxy.sh
+=end
+
+
+=begin
 if File.exists?("/var/haproxy-acme-validation-plugin/acme-http01-webroot.lua")
     use_acme = 'lua-load /var/haproxy-acme-validation-plugin/acme-http01-webroot.lua'
 else
     use_acme = ' '
 end 
+=end
 
  
 =begin

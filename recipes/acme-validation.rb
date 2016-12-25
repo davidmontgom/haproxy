@@ -15,6 +15,9 @@ template "/var/cert-renewal-haproxy.sh" do
   mode "0755"
 end
 
+
+
+
 =begin
 cron 'cert_renew' do
   hour '5'

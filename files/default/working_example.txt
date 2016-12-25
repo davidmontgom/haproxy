@@ -1,0 +1,45 @@
+
+
+add to global tune.ssl.default-dh-param 2048
+
+wget https://dl.eff.org/certbot-auto
+chmod a+x certbot-auto
+echo "y" | ./certbot-auto
+
+
+sudo ./certbot-auto certonly --text --webroot --webroot-path   /var/lib/haproxy -d ass.iboot.io --renew-by-default --agree-tos   --email your@email.com
+
+sudo cat /etc/letsencrypt/live/ass.iboot.io/privkey.pem   /etc/letsencrypt/live/ass.iboot.io/fullchain.pem   | sudo tee /etc/letsencrypt/live/ass.iboot.io/haproxy.pem >/dev/null
+
+
+	
+       frontend https
+         bind *:443 ssl crt /etc/letsencrypt/live/ass.iboot.io/haproxy.pem
+         mode http
+         default_backend api-test_backend
+
+
+
+
+        frontend api-test_front
+           bind 0.0.0.0:80
+           mode http
+           option httplog
+           acl url_acme_http01 path_beg /.well-known/acme-challenge/
+           http-request use-service lua.acme-http01 if METH_GET url_acme_http01
+           default_backend api-test_backend
+
+
+
+        backend api-test_backend
+           option httpclose
+           option forwardfor
+           http-request set-header X-Forwarded-Port %[dst_port]
+           http-request add-header X-Forwarded-Proto https if { ssl_fc }
+           redirect scheme https if !{ ssl_fc }
+           cookie SERVERID insert indirect nocache
+           mode http
+           option httplog
+           balance roundrobin
+           server haproxy-1 159.203.178.77:80 check cookie s1
+
