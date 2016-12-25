@@ -135,7 +135,7 @@ template "/etc/haproxy/haproxy.cfg.orig" do
     owner "root"
     group "root"
     mode "0700"
-    variables lazy {{:use_acme => use_acme}}
+    #variables lazy {{:use_acme => use_acme}}  
 end
 
 
