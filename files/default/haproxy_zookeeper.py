@@ -179,9 +179,7 @@ class haproxy(object):
         2) proxy server does not contain a cluster slug but with an exclude - result: all CS are added the proxy except those in the exclude list
         3) proxy server has a cluster slug and matches the CS - then added    
             e.g. an api sever might need access to 2 different mysql clusters
-        
-                
-        4) proxy server does not hava matching CS but forced with include 
+        4) proxy server does not have matching CS but forced with include 
         
         
         

@@ -8,7 +8,7 @@ cluster_slug = cluster_slug.gsub(/\n/, "")
 
 if datacenter!='aws'
   data_bag("server_data_bag")
-  haproxy_server = data_bag_item("server_data_bag", "haproxy")
+  haproxy_server = data_bag_item("server_data_bag", server_type)
   
   public_ports = haproxy_server[datacenter][environment][location][cluster_slug]['public_ports']
   
