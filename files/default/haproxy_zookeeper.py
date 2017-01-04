@@ -320,6 +320,12 @@ class haproxy(object):
             
         base = self.get_base_name_of_proxy_service(server_type_cs,use_services)
         temp = []
+        
+        
+        #used for frontend e.g. zookjeeper vs exhibitor
+        if meta.has_key('base'):
+            base = self.get_base_name_of_proxy_service(meta['base'],use_services) 
+            
             
         #This is becuase haproxy fails if no backend even if no servers
         if self.base_ip_hash.has_key(base)==False:
@@ -597,6 +603,7 @@ frontend public
                 meta = self.haproxy_server_params[server_type_cs]
                 self.create_service_frontend(server_type_cs,meta)
                 
+                
             for server_type_cs in active_proxies: 
                 meta = self.haproxy_server_params[server_type_cs]
                 self.create_service_backend(server_type_cs,meta)
@@ -763,7 +770,8 @@ while True:
             print 'HA LOOP'
             #http://stackoverflow.com/questions/8238360/how-to-save-traceback-sys-exc-info-values-in-a-variable
             print traceback.format_exc()
-                             
+                         
+                           
         sys.stdout.flush()
         sys.stderr.flush()
         print '-'*20
