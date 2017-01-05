@@ -302,7 +302,7 @@ class haproxy(object):
             for frontend_server_type_cs,frontend_meta in meta['frontend'].iteritems():
                 self.create_service_frontend(frontend_server_type_cs,frontend_meta)
                 
-    def create_service_backend(self,server_type_cs,meta):
+    def create_service_backend(self,server_type_cs,meta,frontend_base=None):
         
             
         mode = meta['mode']
@@ -323,8 +323,9 @@ class haproxy(object):
         
         
         #used for frontend e.g. zookjeeper vs exhibitor
-        if meta.has_key('base'):
-            base = self.get_base_name_of_proxy_service(meta['base'],use_services) 
+        #if meta.has_key('base'):
+        if frontend_base:
+            base = self.get_base_name_of_proxy_service(frontend_base,use_services) 
             
             
         #This is becuase haproxy fails if no backend even if no servers
@@ -340,7 +341,7 @@ class haproxy(object):
             self.ha_backend_end_blocks.append(temp_ha)
             if meta.has_key('frontend'):
                 for frontend_server_type_cs,frontend_meta in meta['frontend'].iteritems():
-                    self.create_service_backend(frontend_server_type_cs,frontend_meta)
+                    self.create_service_backend(frontend_server_type_cs,frontend_meta,frontend_base=server_type_cs)
            
           
            
@@ -362,7 +363,7 @@ class haproxy(object):
             
             if meta.has_key('frontend'):
                 for frontend_server_type_cs,frontend_meta in meta['frontend'].iteritems():
-                    self.create_service_backend(frontend_server_type_cs,frontend_meta)
+                    self.create_service_backend(frontend_server_type_cs,frontend_meta,frontend_base=server_type_cs)
      
     def create_matchtype_frontend(self,meta):
 
@@ -771,7 +772,7 @@ while True:
             #http://stackoverflow.com/questions/8238360/how-to-save-traceback-sys-exc-info-values-in-a-variable
             print traceback.format_exc()
                          
-                           
+        
         sys.stdout.flush()
         sys.stderr.flush()
         print '-'*20
