@@ -756,7 +756,8 @@ while True:
         temp = open('/var/zookeeper_node_name.json').readlines()[0]
         node,ip = temp.split(' ')
         server_type = node.split('-')[0]
-        parms = getparms.get_parms(slug='forex')
+        #parms = getparms.get_parms(slug='forex')
+        parms = getparms.get_parms()
         environment = parms['environment']
         location = parms['location']
         datacenter = parms['datacenter']
