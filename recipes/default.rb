@@ -60,6 +60,10 @@ file "/var/ha_services.json" do
 end
 =end
 
+python_package 'six' do
+	version '1.6.0'
+end
+
 git "/var/bootops" do
     repository "git@bitbucket.org:davidmontgom/bootops.git"
     revision bootops_branch_name
