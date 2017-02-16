@@ -60,9 +60,16 @@ file "/var/ha_services.json" do
 end
 =end
 
+=begin
 python_package 'six' do
 	version '1.6.0'
 end
+=end
+
+python_package "setuptools" do
+  action :upgrade
+end
+
 
 git "/var/bootops" do
     repository "git@bitbucket.org:davidmontgom/bootops.git"
