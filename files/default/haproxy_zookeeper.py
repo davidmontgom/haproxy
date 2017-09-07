@@ -585,7 +585,7 @@ frontend public
                 use_services='services/'
             else:
                 use_services=''
-            base = self.get_base_name_of_proxy_service(server_type_cs,use_services='')
+            base = self.get_base_name_of_proxy_service(server_type_cs,use_services=use_services)
             path = '/%s/' % base
             exists = zk.exists(path)
             print path
