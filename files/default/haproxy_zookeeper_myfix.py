@@ -103,6 +103,7 @@ def get_zk_conn():
         zk = None
     
     zk_host_list = get_zk_host_list()
+    print 'zk:',zk_host_list
     if zk_host_list:
         try:
             zk_host_str = get_zk_host_str(zk_host_list)
@@ -232,7 +233,9 @@ class haproxy(object):
         active_proxies = []
         temp = self.haproxy_server_params.keys()
         for server_type_cs, meta in self.haproxy_server_params.iteritems():
+            
             if server_type_cs.find('-')>=0:
+                #print server_type_cs, meta
                 temp_cs = server_type_cs.split('-')[1]
                 if temp_cs==self.cluster_slug:
                     active_proxies.append(server_type_cs)
@@ -249,7 +252,7 @@ class haproxy(object):
                     
                 
                 
-        
+        #print '---',active_proxies
         self.active_proxies = active_proxies
         return active_proxies
 
@@ -344,7 +347,8 @@ class haproxy(object):
                     self.create_service_backend(frontend_server_type_cs,frontend_meta,frontend_base=server_type_cs)
            
           
-           
+        print '===',use_services,base
+        pprint(self.base_ip_hash)
         if self.base_ip_hash.has_key(base):
             for index,ip in enumerate(list(self.base_ip_hash[base])):
                 temp.append('server %s-%s %s:%s check' % (server_type_cs,index+1,ip,remote_port))   
@@ -579,13 +583,16 @@ frontend public
         
     def get_zk_base_ip_address(self,active_proxies):
         
-        
+        print "%%"*80
+        pprint(self.haproxy_server_params)
         for server_type_cs in active_proxies:
             if self.haproxy_server_params[server_type_cs].has_key('services') and self.haproxy_server_params[server_type_cs]['services']==True:
                 use_services='services/'
             else:
                 use_services=''
-            base = self.get_base_name_of_proxy_service(server_type_cs,use_services='')
+                
+                
+            base = self.get_base_name_of_proxy_service(server_type_cs,use_services=use_services)
             path = '/%s/' % base
             exists = zk.exists(path)
             print path
@@ -594,6 +601,8 @@ frontend public
                 print path,address
                 self.base_ip_hash[base]=list(address)
         
+        pprint(self.base_ip_hash)
+        print "%%"*80
         return self.base_ip_hash
           
     def run(self):
@@ -602,6 +611,7 @@ frontend public
         #SERVICE
         if self.server_type!='haproxy':
             active_proxies = self.create_proxy_service_list() 
+            pprint(active_proxies)
             base_ip_hash = self.get_zk_base_ip_address(active_proxies)
             
             for server_type_cs in active_proxies: 
@@ -744,8 +754,8 @@ def wait_for_zk():
         time.sleep(1)
     return zk
    
-
-while True:
+done = False
+while done==False:
     
     
     if zk:
@@ -772,6 +782,7 @@ while True:
         try:
             ha = haproxy(server_type,cluster_slug,haproxy_server_params,slug,datacenter,environment,location)
             ha.run()
+            done = True
         except:
             print 'HA LOOP'
             #http://stackoverflow.com/questions/8238360/how-to-save-traceback-sys-exc-info-values-in-a-variable
