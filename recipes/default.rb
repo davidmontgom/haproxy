@@ -66,8 +66,12 @@ python_package 'six' do
 end
 =end
 
-python_package "setuptools" do
-  action :upgrade
+
+
+bash "install_haproxy_setuptools" do
+  code <<-EOH
+  	pip install --upgrade setuptools
+  EOH
 end
 
 
